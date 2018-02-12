@@ -1,12 +1,13 @@
 {
 	"name": "creatures",
 	"description": "Library to interface with the Creatures 2 game",
-	"version": "0.1.0",
+	"version": "0.2.0",
 	"author": "Jelle De Loecker <jelle@develry.be>",
 	"keywords": ["creatures", "sfc", "caos", "norns", "norn", "ettin", "grendel", "shee", "albia"],
 	"repository": "git@github.com:skerit/creatures.git",
 	"license": "MIT",
 	"dependencies": {
-		"protoblast": "~2.0.0"
+		"protoblast": "~0.4.2",
+		"binary-extractor": "~0.1.0"
 	}
 }
