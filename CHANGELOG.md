@@ -1,3 +1,8 @@
+## 0.1.1
+
+* Add getting generation of creature
+* Enable setting of name
+
 ## 0.1.0 (2016-05-02)
 
 * Execute CAOS commands via VB6 executable
