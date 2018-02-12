@@ -22,3 +22,4 @@ files/
 
 # Ignore test files
 scratch*
+log.json
