@@ -1,3 +1,8 @@
+## 0.2.0 (WIP)
+
+* Add speedhack functionality
+* Expand vbole capabilities
+
 ## 0.1.1
 
 * Add getting generation of creature
