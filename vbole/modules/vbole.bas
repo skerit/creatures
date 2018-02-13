@@ -227,7 +227,7 @@ Function ReadStdIn(Optional ByVal NumBytes As Long = -1) As String
         If result = 0 Then
             Err.Raise 1001, , "Unable to read from standard input"
         End If
-        ReadStdIn = ReadStdIn & Left$(Buffer, BytesRead)
+        ReadStdIn = ReadStdIn & left$(Buffer, BytesRead)
     Loop Until BytesRead < Len(Buffer)
 End Function
 'Write to the standard output

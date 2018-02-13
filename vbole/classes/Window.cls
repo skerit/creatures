@@ -15,14 +15,22 @@ Public handle As Long
 Public proc_id As Long
 Public thread_id As Long
 Public title As String
-Private Declare Function GetWindowThreadProcessId Lib "user32" (ByVal hwnd As Long, lpdwprocessid As Long) As Long
-Private Declare Function sendMessageI Lib "user32" Alias "SendMessageW" (ByVal hwnd As Long, ByVal wMsg As Long, ByVal wParam As Long, lParam As Any) As Long
-Private Declare Function moveWindowI Lib "user32" Alias "MoveWindow" (ByVal hwnd As Long, ByVal x As Long, ByVal y As Long, ByVal nWidth As Long, ByVal nHeight As Long, ByVal bRepaint As Long) As Long
-Private Declare Function BringWindowToTop Lib "user32" (ByVal hwnd As Long) As Long
-Private Declare Function SetFocus Lib "user32" (ByVal hwnd As Long) As Long
+
+Private pLeft As Long
+Private pRight As Long
+Private pTop As Long
+Private pBottom As Long
+Private pWidth As Long
+Private pHeight As Long
+
+Private Declare Function GetWindowThreadProcessId Lib "user32" (ByVal hWnd As Long, lpdwprocessid As Long) As Long
+Private Declare Function sendMessageI Lib "user32" Alias "SendMessageW" (ByVal hWnd As Long, ByVal wMsg As Long, ByVal wParam As Long, lParam As Any) As Long
+Private Declare Function moveWindowI Lib "user32" Alias "MoveWindow" (ByVal hWnd As Long, ByVal X As Long, ByVal Y As Long, ByVal nWidth As Long, ByVal nHeight As Long, ByVal bRepaint As Long) As Long
+Private Declare Function BringWindowToTop Lib "user32" (ByVal hWnd As Long) As Long
+Private Declare Function SetFocus Lib "user32" (ByVal hWnd As Long) As Long
 Private Declare Function showWindowI Lib "user32" Alias "ShowWindow" (ByVal lhWnd As Long, ByVal nCmdShow As Long) As Long
 Private Declare Sub CopyMemory Lib "kernel32" Alias "RtlMoveMemory" (lpvDest As Any, lpvSource As Any, ByVal cbCopy As Long)
-Private Declare Function SetForegroundWindow Lib "user32" (ByVal hwnd As Long) As Long
+Private Declare Function SetForegroundWindow Lib "user32" (ByVal hWnd As Long) As Long
 Private Declare Function OpenProcess Lib "kernel32" (ByVal dwDesiredAccess As Long, ByVal bInheritHandle As Long, ByVal dwProcessId As Long) As Long
 Private Declare Function EnumProcessModules Lib "psapi" (ByVal hProcess As Long, lphModule As Long, ByVal cb As Long, lpcbNeeded As Long) As Long
 Private Declare Function GetModuleBaseName Lib "psapi" Alias "GetModuleBaseNameA" (ByVal hProcess As Long, ByVal hModule As Long, ByVal lpFileName As String, ByVal nSize As Long) As Long
@@ -93,7 +101,7 @@ Public Function loadByHandle(handle_param As Long)
     temp_length = GetWindowText(handle, temp_title, Len(temp_title))
     
     'Trim the result
-    title = Left(temp_title, temp_length)
+    title = left(temp_title, temp_length)
     
     If handle Then
         loadProcId
@@ -130,8 +138,8 @@ Public Sub sendJSON(payload)
     sendMessage (message)
 End Sub
 'Move this window
-Public Sub moveWindow(x As Integer, y As Integer, width As Integer, height As Integer, Optional repaint As Long = 1)
-    moveWindowI handle, x, y, width, height, repaint
+Public Sub moveWindow(X As Long, Y As Long, width As Long, height As Long, Optional repaint As Long = 1)
+    moveWindowI handle, X, Y, width, height, repaint
 End Sub
 Public Sub showWindow()
     showWindowI handle, 5
@@ -196,7 +204,78 @@ Public Function getProcessPath(Optional FullSpec As Boolean = True) As String
         rtn = GetModuleBaseName(hProcess, lProcMods(0), sFileName, Len(sFileName))
     End If
 
-    getProcessPath = Left$(sFileName, rtn)
+    getProcessPath = left$(sFileName, rtn)
 
     rtn = CloseHandle(hProcess)
 End Function
+Public Sub updateCoordinates()
+    GetWindowSize handle, pLeft, pRight, pTop, pBottom, pWidth, pHeight
+End Sub
+'Window Left (X) getter
+Public Property Get left() As Long
+    updateCoordinates
+    left = pLeft
+End Property
+'Window Left (X) setter
+Public Property Let left(ByVal value As Long)
+    updateCoordinates
+    pLeft = value
+    moveWindow pLeft, pTop, pWidth, pHeight
+End Property
+'Window Right getter
+Public Property Get right() As Long
+    updateCoordinates
+    right = pRight
+End Property
+'Window Right setter
+Public Property Let right(ByVal value As Long)
+    updateCoordinates
+    pRight = value
+    pLeft = pRight - pWidth
+    moveWindow pLeft, pTop, pWidth, pHeight
+End Property
+'Window Top (Y) getter
+Public Property Get top() As Long
+    updateCoordinates
+    top = pTop
+End Property
+'Window Top (Y) setter
+Public Property Let top(ByVal value As Long)
+    updateCoordinates
+    pTop = value
+    moveWindow pLeft, pTop, pWidth, pHeight
+End Property
+'Window Bottom getter
+Public Property Get bottom() As Long
+    updateCoordinates
+    bottom = pBottom
+End Property
+'Window Bottom setter
+Public Property Let right(ByVal value As Long)
+    updateCoordinates
+    pBottom = value
+    pTop = pBottom - pHeight
+    moveWindow pLeft, pTop, pWidth, pHeight
+End Property
+'Window width getter
+Public Property Get width() As Long
+    updateCoordinates
+    width = pWidth
+End Property
+'Window width setter
+Public Property Let width(ByVal value As Long)
+    updateCoordinates
+    pWidth = value
+    moveWindow pLeft, pTop, pWidth, pHeight
+End Property
+'Window height getter
+Public Property Get height() As Long
+    updateCoordinates
+    height = pHeight
+End Property
+'Window height setter
+Public Property Let height(ByVal value As Long)
+    updateCoordinates
+    pHeight = value
+    moveWindow pLeft, pTop, pWidth, pHeight
+End Property
