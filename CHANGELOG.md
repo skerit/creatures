@@ -3,6 +3,7 @@
 * Add speedhack functionality
 * Expand vbole capabilities
 * Added S16 class
+* Added Base class from which all others inherit
 
 ## 0.1.1
 
