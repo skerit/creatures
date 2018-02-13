@@ -131,6 +131,11 @@ Function executeCommand(req As Object) As String
     ElseIf req.Item("type") = "setpath" Then
         'Set the current path
         current_path = req.Item("command")
+    
+    ElseIf req.Item("type") = "getprocesspath" Then
+        'Get the path of the process of the active window
+        response = ActiveWindow.getProcessPath(True)
+    
     End If
     
     executeCommand = response

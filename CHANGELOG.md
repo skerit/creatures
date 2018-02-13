@@ -4,6 +4,7 @@
 * Expand vbole capabilities
 * Added S16 class
 * Added Base class from which all others inherit
+* [VB] Added `Window#getProcessPath` to VBOle and implemented the `getprocesspath` command
 
 ## 0.1.1
 

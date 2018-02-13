@@ -23,6 +23,13 @@ Private Declare Function SetFocus Lib "user32" (ByVal hwnd As Long) As Long
 Private Declare Function showWindowI Lib "user32" Alias "ShowWindow" (ByVal lhWnd As Long, ByVal nCmdShow As Long) As Long
 Private Declare Sub CopyMemory Lib "kernel32" Alias "RtlMoveMemory" (lpvDest As Any, lpvSource As Any, ByVal cbCopy As Long)
 Private Declare Function SetForegroundWindow Lib "user32" (ByVal hwnd As Long) As Long
+Private Declare Function OpenProcess Lib "kernel32" (ByVal dwDesiredAccess As Long, ByVal bInheritHandle As Long, ByVal dwProcessId As Long) As Long
+Private Declare Function EnumProcessModules Lib "psapi" (ByVal hProcess As Long, lphModule As Long, ByVal cb As Long, lpcbNeeded As Long) As Long
+Private Declare Function GetModuleBaseName Lib "psapi" Alias "GetModuleBaseNameA" (ByVal hProcess As Long, ByVal hModule As Long, ByVal lpFileName As String, ByVal nSize As Long) As Long
+Private Declare Function GetModuleFileNameEx Lib "psapi" Alias "GetModuleFileNameExA" (ByVal hProcess As Long, ByVal hModule As Long, ByVal lpFileName As String, ByVal nSize As Long) As Long
+Private Declare Function CloseHandle Lib "kernel32" (ByVal hObject As Long) As Long
+
+Private Const PROCESS_ALL_ACCESS = &H1F0FFF
 
 Private Type CopyData
     dwData As Long
@@ -158,4 +165,38 @@ Public Sub typeKeys(keys As String, Optional wait As Boolean = True)
     'Send the keys and wait for it to return
     SendKeys keys, wait
 End Sub
+'Get the path of the process
+Public Function getProcessPath(Optional FullSpec As Boolean = True) As String
+    Dim rtn As Long
+    Dim lProcMods() As Long
+    Dim sFileName As String * 260
+    Dim lSize As Long
+    Dim lRequired As Long
+    Dim hProcess As Long
+    Dim hWndOfFormWithFocus As Long
+    Dim l As Long
+    
+    lSize = 4
+    ReDim lProcMods(0)
+    
+    hProcess = OpenProcess(PROCESS_ALL_ACCESS, 0&, proc_id)
+    ' Enumerate modules.
+    rtn = EnumProcessModules(hProcess, lProcMods(0), lSize, lRequired)
+    ' If array is not large enough to hold all results, number of bytes required is in lRequired.
+    If lRequired > lSize Then
+        lSize = lRequired
+        ReDim lProcMods(0 To (lSize / 4) - 1)
+        rtn = EnumProcessModules(hProcess, lProcMods(0), lSize, lRequired)
+    End If
+    ' lProcMods() now holds the list of module handles associated with the process.
+    ' The zeroth element is the main program.
+    If FullSpec Then
+        rtn = GetModuleFileNameEx(hProcess, lProcMods(0), sFileName, Len(sFileName))
+    Else
+        rtn = GetModuleBaseName(hProcess, lProcMods(0), sFileName, Len(sFileName))
+    End If
 
+    getProcessPath = Left$(sFileName, rtn)
+
+    rtn = CloseHandle(hProcess)
+End Function
