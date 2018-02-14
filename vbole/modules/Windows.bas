@@ -1,16 +1,13 @@
 Attribute VB_Name = "Windows"
 Public prog As String
-Private Declare Function FindWindow Lib "user32.dll" Alias "FindWindowA" (ByVal lpClassName As Any, ByVal lpWindowName As Any) As Long
-Private Declare Function GetWindow Lib "user32.dll" (ByVal hWnd As Long, ByVal wCmd As Long) As Long
-Public Declare Function GetWindowText Lib "user32.dll" Alias "GetWindowTextA" (ByVal hWnd As Long, ByVal lpString As String, ByVal nMaxCount As Long) As Long
+Private Declare Function FindWindow Lib "User32.dll" Alias "FindWindowA" (ByVal lpClassName As Any, ByVal lpWindowName As Any) As Long
+Private Declare Function GetWindow Lib "User32.dll" (ByVal hWnd As Long, ByVal wCmd As Long) As Long
+Public Declare Function GetWindowText Lib "User32.dll" Alias "GetWindowTextA" (ByVal hWnd As Long, ByVal lpString As String, ByVal nMaxCount As Long) As Long
 Private Declare Function GetWindowTextLength Lib "user32" Alias "GetWindowTextLengthA" (ByVal hWnd As Long) As Long
-Private Declare Function GetParent Lib "user32.dll" (ByVal hWnd As Long) As Long
+Private Declare Function GetParent Lib "User32.dll" (ByVal hWnd As Long) As Long
 Private Declare Function GetWindowThreadProcessId Lib "user32" (ByVal hWnd As Long, lpdwprocessid As Long) As Long
-Private Declare Function EnumWindows Lib "user32" (ByVal lpEnumFunc As Long, _
-    ByVal lParam As Long) As Long
-Private Declare Function EnumChildWindows Lib "user32" (ByVal hWndParent As _
-    Long, ByVal lpEnumFunc As Long, ByVal lParam As Long) As Long
-
+Private Declare Function EnumWindows Lib "user32" (ByVal lpEnumFunc As Long, ByVal lParam As Long) As Long
+Private Declare Function EnumChildWindows Lib "user32" (ByVal hWndParent As Long, ByVal lpEnumFunc As Long, ByVal lParam As Long) As Long
 Private Declare Function GetWindowRect Lib "user32" (ByVal hWnd As Long, lpRect As WindowRect) As Long
 
 Public Const WM_COPYDATA = &H4A
@@ -19,6 +16,7 @@ Private Const FWP_STARTSWITH = 0
 Private Const FWP_CONTAINS = 1
 Private Const FWP_ENDSWITH = 2
 Private title As String
+
 Public Enum SearchMethod
     StartsWith = 0
     Contains = 1
@@ -27,11 +25,12 @@ Public Enum SearchMethod
 End Enum
 
 Private Type WindowRect
-    Left As Long
-    Top As Long
-    Right As Long
-    Bottom As Long
+    left As Long
+    top As Long
+    right As Long
+    bottom As Long
 End Type
+
 ' The following variables are shared between the main ChildWindows procedure
 ' and the auxiliary (private) ChildWindows_CBK routine
 
@@ -39,6 +38,27 @@ End Type
 Dim windowlist() As Long
 ' The number of elements in the array.
 Dim windowsCount As Long
+'Find all child windows of a parent handle
+Public Sub findChildWindowHandles(parent_handle As Long, ByRef child_windows As Collection)
+
+    Dim handle_tmp As Long
+    
+    'Start with the first window
+    handle_tmp = FindWindow(0&, 0&)
+    
+    Do Until handle_tmp = 0
+
+        If GetParent(handle_tmp) = parent_handle Then
+            child_windows.Add handle_tmp
+            
+            'Do it recursively
+            findChildWindowHandles handle_tmp, child_windows
+        End If
+    
+        handle_tmp = GetWindow(handle_tmp, gw_hwndnext)
+    Loop
+
+End Sub
 'Find a window by the titlepart & search method
 Public Function findwindowpartial(ByVal titlepart$, method As SearchMethod, Optional parent_proc As Long = 0, Optional parent_handle As Long = -1) As Long
     Dim hwndtmp As Long
@@ -85,7 +105,7 @@ Public Function findwindowpartial(ByVal titlepart$, method As SearchMethod, Opti
             
             If nret Then
                 'Remove the extra bits from the placeholder
-                titletmp = Left(titletmp, nret)
+                titletmp = left(titletmp, nret)
 
                 'Uppercase the title
                 utitletmp = UCase(titletmp)
@@ -193,17 +213,16 @@ Public Function activateWindow(title, Optional wait As Integer = 60) As Boolean
     
     On Error Resume Next
     
-    For Each Value In windows
-        If InStr(Value, title) Then
-            AppActivate Value
+    For Each value In windows
+        If InStr(value, title) Then
+            AppActivate value
             activateWindow = True
             Exit For
         End If
-    Next Value
+    Next value
 End Function
 ' Return an array of Long holding the handles of all the child windows
 ' of a given window. If hWnd = 0 it returns all the top-level windows.
-
 Function ChildWindows(ByVal hWnd As Long) As Long()
     windowsCount = 0
     If hWnd Then
@@ -232,15 +251,15 @@ Private Function EnumWindows_CBK(ByVal hWnd As Long, ByVal lParam As Long) As _
     EnumWindows_CBK = 1
 End Function
 'Get a window's size in pixel
-Public Sub GetWindowSize(ByVal hWnd As Long, Optional ByRef Left As Long, Optional ByRef Right As Long, Optional ByRef Top As Long, Optional ByRef Bottom As Long, Optional ByRef Width As Long, Optional ByRef Height As Long)
+Public Sub GetWindowSize(ByVal hWnd As Long, Optional ByRef left As Long, Optional ByRef right As Long, Optional ByRef top As Long, Optional ByRef bottom As Long, Optional ByRef width As Long, Optional ByRef height As Long)
     Dim rc As WindowRect
 
     GetWindowRect hWnd, rc
     
-    Left = rc.Left
-    Right = rc.Right
-    Top = rc.Top
-    Bottom = rc.Bottom
-    Width = rc.Right - rc.Left
-    Height = rc.Bottom - rc.Top
+    left = rc.left
+    right = rc.right
+    top = rc.top
+    bottom = rc.bottom
+    width = rc.right - rc.left
+    height = rc.bottom - rc.top
 End Sub

@@ -8,6 +8,7 @@ Module=Injector; external\Injector.bas
 Module=JSON; external\JSON.bas
 Module=CAOSole; modules\vbole.bas
 Module=Windows; modules\Windows.bas
+Module=Mouse; modules\Mouse.bas
 Startup="Sub Main"
 HelpFile=""
 Title="vbole"

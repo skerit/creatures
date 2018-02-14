@@ -91,48 +91,62 @@ End Function
 'Execute a single request
 Function executeCommand(req As Object) As String
     Dim response As String
+    Dim cmd_type As String
     response = ""
+    cmd_type = req.Item("type")
 
-    If req.Item("type") = "caos" Then
+    If cmd_type = "caos" Then
         'Send the command to C2
         App.firecommand 1, req.Item("command"), response
 
-    ElseIf req.Item("type") = "c2window" Then
+    ElseIf cmd_type = "c2window" Then
         'Set the ActiveWindow to C2Window
         Set ActiveWindow = C2Window
         response = CStr(C2Window.handle)
 
-    ElseIf req.Item("type") = "window" Then
+    ElseIf cmd_type = "window" Then
         'Load a window by title as the active window
         Set ActiveWindow = New Window
         ActiveWindow.loadByTitle req.Item("command")
         response = CStr(ActiveWindow.handle)
 
-    ElseIf req.Item("type") = "keys" Then
+    ElseIf cmd_type = "keys" Then
         'Send keystrokes to the current active window
         ActiveWindow.typeKeys req.Item("command")
 
-    ElseIf req.Item("type") = "message" Then
+    ElseIf cmd_type = "message" Then
         'Send a message to the current active window
         ActiveWindow.sendMessage req.Item("command")
 
-    ElseIf req.Item("type") = "setspeed" Then
+    ElseIf cmd_type = "setspeed" Then
         'Set the speed of C2
         setSpeed req.Item("acceleration"), req.Item("sleeptime")
+    
+    ElseIf cmd_type = "activatewindow" Then
+        'Activate the current window
+        ActiveWindow.activate
 
-    ElseIf req.Item("type") = "movewindow" Then
+    ElseIf cmd_type = "movewindow" Then
         'Move the current active window
         ActiveWindow.moveWindow req.Item("x"), req.Item("y"), req.Item("width"), req.Item("height"), req.Item("repaint")
+    
+    ElseIf cmd_type = "setcursor" Then
+        'Move the cursor
+        ActiveWindow.setCursor req.Item("x"), req.Item("y")
+    
+    ElseIf cmd_type = "click" Then
+        'Click down
+        Mouse.LeftClick
 
-    ElseIf req.Item("type") = "getpath" Then
+    ElseIf cmd_type = "getpath" Then
         'Get the current set path
         response = current_path
 
-    ElseIf req.Item("type") = "setpath" Then
+    ElseIf cmd_type = "setpath" Then
         'Set the current path
         current_path = req.Item("command")
     
-    ElseIf req.Item("type") = "getprocesspath" Then
+    ElseIf cmd_type = "getprocesspath" Then
         'Get the path of the process of the active window
         response = ActiveWindow.getProcessPath(True)
     

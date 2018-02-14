@@ -144,6 +144,20 @@ End Sub
 Public Sub showWindow()
     showWindowI handle, 5
 End Sub
+Public Sub getAllChildWindows()
+    Dim result As New Collection
+    Dim value As Variant
+    Dim Child As Window
+    
+    findChildWindowHandles handle, result
+    
+    For Each value In result
+        Debug.Print "Found child " & value
+        Set Child = New Window
+        Child.loadByHandle CLng(value)
+        Debug.Print " -- " & Child.title & " - " & Child.width
+    Next value
+End Sub
 Public Function getChildWindow(title As String) As Window
     Dim child_handle As Long
     Dim Child As New Window
@@ -251,7 +265,7 @@ Public Property Get bottom() As Long
     bottom = pBottom
 End Property
 'Window Bottom setter
-Public Property Let right(ByVal value As Long)
+Public Property Let bottom(ByVal value As Long)
     updateCoordinates
     pBottom = value
     pTop = pBottom - pHeight
@@ -279,3 +293,21 @@ Public Property Let height(ByVal value As Long)
     pHeight = value
     moveWindow pLeft, pTop, pWidth, pHeight
 End Property
+'Set the cursor to a position inside this window
+Public Sub setCursor(X As Long, Y As Long)
+
+    'Update the window coordinates
+    updateCoordinates
+    
+    'Add the left & top of the window
+    X = X + pLeft
+    Y = Y + pTop
+    
+    'Activate the window
+    activate
+    
+    Debug.Print "Setting cursor to " & X & "," & Y
+    
+    'Actually set the position
+    Mouse.setPosition X, Y
+End Sub
