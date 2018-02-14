@@ -7,7 +7,8 @@
 	"repository": "git@github.com:skerit/creatures.git",
 	"license": "MIT",
 	"dependencies": {
-		"protoblast": "~0.4.2",
-		"binary-extractor": "~0.1.0"
+		"binary-extractor": "~0.1.0",
+		"graceful-fs": "~4.1.11",
+		"protoblast": "~0.4.2"
 	}
 }
