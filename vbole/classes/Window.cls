@@ -48,11 +48,20 @@ End Type
 Private Sub Class_Initialize()
     handle = 0
 End Sub
-'Get the process id
-Private Sub loadProcId()
+'Is this process still running?
+Public Property Get is_running() As Boolean
+    If loadProcId() = 0 Then
+        is_running = False
+    Else
+        is_running = True
+    End If
+End Property
+'Load the process id
+Public Function loadProcId() As Long
     ' Process id will be stored in idProc, the thread id is returned to threadId
     thread_id = GetWindowThreadProcessId(handle, proc_id)
-End Sub
+    loadProcId = proc_id
+End Function
 'Load a window by its title
 Public Sub loadByTitle(title As String, Optional method As SearchMethod = TryAll)
     Dim try_result As Long
@@ -146,17 +155,17 @@ Public Sub showWindow()
 End Sub
 Public Sub getAllChildWindows()
     Dim result As New Collection
-    Dim value As Variant
+    Dim Value As Variant
     Dim Child As Window
     
     findChildWindowHandles handle, result
     
-    For Each value In result
-        Debug.Print "Found child " & value
+    For Each Value In result
+        Debug.Print "Found child " & Value
         Set Child = New Window
-        Child.loadByHandle CLng(value)
+        Child.loadByHandle CLng(Value)
         Debug.Print " -- " & Child.title & " - " & Child.width
-    Next value
+    Next Value
 End Sub
 Public Function getChildWindow(title As String) As Window
     Dim child_handle As Long
@@ -231,9 +240,9 @@ Public Property Get left() As Long
     left = pLeft
 End Property
 'Window Left (X) setter
-Public Property Let left(ByVal value As Long)
+Public Property Let left(ByVal Value As Long)
     updateCoordinates
-    pLeft = value
+    pLeft = Value
     moveWindow pLeft, pTop, pWidth, pHeight
 End Property
 'Window Right getter
@@ -242,9 +251,9 @@ Public Property Get right() As Long
     right = pRight
 End Property
 'Window Right setter
-Public Property Let right(ByVal value As Long)
+Public Property Let right(ByVal Value As Long)
     updateCoordinates
-    pRight = value
+    pRight = Value
     pLeft = pRight - pWidth
     moveWindow pLeft, pTop, pWidth, pHeight
 End Property
@@ -254,9 +263,9 @@ Public Property Get top() As Long
     top = pTop
 End Property
 'Window Top (Y) setter
-Public Property Let top(ByVal value As Long)
+Public Property Let top(ByVal Value As Long)
     updateCoordinates
-    pTop = value
+    pTop = Value
     moveWindow pLeft, pTop, pWidth, pHeight
 End Property
 'Window Bottom getter
@@ -265,9 +274,9 @@ Public Property Get bottom() As Long
     bottom = pBottom
 End Property
 'Window Bottom setter
-Public Property Let bottom(ByVal value As Long)
+Public Property Let bottom(ByVal Value As Long)
     updateCoordinates
-    pBottom = value
+    pBottom = Value
     pTop = pBottom - pHeight
     moveWindow pLeft, pTop, pWidth, pHeight
 End Property
@@ -277,9 +286,9 @@ Public Property Get width() As Long
     width = pWidth
 End Property
 'Window width setter
-Public Property Let width(ByVal value As Long)
+Public Property Let width(ByVal Value As Long)
     updateCoordinates
-    pWidth = value
+    pWidth = Value
     moveWindow pLeft, pTop, pWidth, pHeight
 End Property
 'Window height getter
@@ -288,9 +297,9 @@ Public Property Get height() As Long
     height = pHeight
 End Property
 'Window height setter
-Public Property Let height(ByVal value As Long)
+Public Property Let height(ByVal Value As Long)
     updateCoordinates
-    pHeight = value
+    pHeight = Value
     moveWindow pLeft, pTop, pWidth, pHeight
 End Property
 'Set the cursor to a position inside this window

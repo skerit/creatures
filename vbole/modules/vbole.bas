@@ -57,6 +57,23 @@ ListenLoop:
             Set App = CreateObject("SFC2.OLE")
         End If
         
+        'If C2 is no longer running, start it again
+        If C2Window.is_running = False Then
+            'Load C2 again
+            Set App = CreateObject("SFC2.OLE")
+            
+            'Sleep for 1 second
+            windows.Sleep 1000
+            
+            'Load the window again
+            Set C2Window = New Window
+            C2Window.loadByTitles ".sfc - Creatures 2", "- Creatures 2", "Creatures 2"
+            
+            'Unset the speedhack window
+            Set C2Speed = New Window
+        End If
+        
+        
         'Is this 1 command or multiple?
         If TypeName(req) = "Collection" Then
             response = executeCommands(req)
@@ -169,6 +186,9 @@ Function setSpeed(acceleration As Double, Optional sleeptime As Integer = 5) As 
 
             'Inject the DLL (current_path is actually set from within node)
             C2Window.injectDll current_path & "\speedhack.dll"
+            
+            'Sleep for half a second
+            windows.Sleep 500
 
             'Try loading the window again
             C2Speed.loadByTitle "Skerit's C2 Speedhack"
@@ -179,10 +199,16 @@ Function setSpeed(acceleration As Double, Optional sleeptime As Integer = 5) As 
                 Exit Function
             Else
                 Debug.Print "Found speedhack window!"
+                C2Speed.moveWindow -200, 10, C2Speed.width, C2Speed.height
             End If
         Else
             Debug.Print "Speedhack window found, handle = " & C2Speed.handle & " - " & C2Speed.title
         End If
+    End If
+    
+    If C2Speed.left > 0 Then
+        'Move the window off screen
+        C2Speed.moveWindow -200, 10, C2Speed.width, C2Speed.height
     End If
     
     Debug.Print "Setting C2 speed to " & acceleration

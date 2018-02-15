@@ -9,6 +9,7 @@ Private Declare Function GetWindowThreadProcessId Lib "user32" (ByVal hWnd As Lo
 Private Declare Function EnumWindows Lib "user32" (ByVal lpEnumFunc As Long, ByVal lParam As Long) As Long
 Private Declare Function EnumChildWindows Lib "user32" (ByVal hWndParent As Long, ByVal lpEnumFunc As Long, ByVal lParam As Long) As Long
 Private Declare Function GetWindowRect Lib "user32" (ByVal hWnd As Long, lpRect As WindowRect) As Long
+Public Declare Sub Sleep Lib "kernel32.dll" (ByVal dwMilliseconds As Long)
 
 Public Const WM_COPYDATA = &H4A
 Private Const gw_hwndnext = 2
@@ -213,13 +214,13 @@ Public Function activateWindow(title, Optional wait As Integer = 60) As Boolean
     
     On Error Resume Next
     
-    For Each value In windows
-        If InStr(value, title) Then
-            AppActivate value
+    For Each Value In windows
+        If InStr(Value, title) Then
+            AppActivate Value
             activateWindow = True
             Exit For
         End If
-    Next value
+    Next Value
 End Function
 ' Return an array of Long holding the handles of all the child windows
 ' of a given window. If hWnd = 0 it returns all the top-level windows.
