@@ -1,4 +1,4 @@
-## 0.2.0 (WIP)
+## 0.2.0 (2018-02-17)
 
 * Add speedhack functionality
 * Expand vbole capabilities
