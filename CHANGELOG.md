@@ -5,6 +5,8 @@
 * Added S16 class
 * Added Base class from which all others inherit
 * [VB] Added `Window#getProcessPath` to VBOle and implemented the `getprocesspath` command
+* Added `Creature#teachLanguage` (you still need to re-set the creature's name, though)
+* Fix the `Creature#move` command
 
 ## 0.1.1
 
