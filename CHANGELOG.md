@@ -1,3 +1,8 @@
+## 0.2.1 (WIP)
+
+* VBOle will now always respond with a JSON object than can optionally contain an error
+* If a command should fail, other commands in the array will no longer be executed
+
 ## 0.2.0 (2018-02-17)
 
 * Add speedhack functionality

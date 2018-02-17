@@ -34,6 +34,7 @@ On Error GoTo ERR_HANDLER
     Dim in_string As String
     Dim out_string As String
     Dim response As String
+    Dim res_req As Dictionary
     Dim req As Object
     
     'Create the internal Window class instances
@@ -78,7 +79,8 @@ ListenLoop:
         If TypeName(req) = "Collection" Then
             response = executeCommands(req)
         Else
-            response = executeCommand(req)
+            Set res_req = executeCommand(req)
+            response = JSON.toString(res_req)
         End If
                 
         'Output the response
@@ -96,60 +98,104 @@ End Sub
 'Execute multiple request after another
 Function executeCommands(commands As Collection) As String
     Dim response As New Collection
+    Dim req_res As Dictionary
     Dim req As Object
     
     For Each req In commands
-        response.Add executeCommand(req)
+        'Execute the command and get the response dictionary
+        Set req_res = executeCommand(req)
+        
+        'Add the response dictionary to the response collection
+        response.Add req_res
+        
+        'If this command caused an error, end loop
+        If req_res.Exists("error") Then
+            Exit For
+        End If
     Next
     
     'Convert all the responses to a json string
     executeCommands = JSON.toString(response)
 End Function
 'Execute a single request
-Function executeCommand(req As Object) As String
-    Dim response As String
+Function executeCommand(req As Object) As Dictionary
+    Dim response As New Dictionary
+    Dim str_result As String
     Dim cmd_type As String
-    response = ""
     cmd_type = req.Item("type")
 
     If cmd_type = "caos" Then
         'Send the command to C2
-        App.firecommand 1, req.Item("command"), response
+        App.firecommand 1, req.Item("command"), str_result
+        
+        'Add the result to the respone
+        response.Add "result", str_result
 
     ElseIf cmd_type = "c2window" Then
         'Set the ActiveWindow to C2Window
         Set ActiveWindow = C2Window
-        response = CStr(C2Window.handle)
+        
+        If C2Window.handle = 0 Then
+            response.Add "error", "C2Window not found!"
+        Else
+            response.Add "handle", C2Window.handle
+        End If
 
     ElseIf cmd_type = "window" Then
         'Load a window by title as the active window
         Set ActiveWindow = New Window
         ActiveWindow.loadByTitle req.Item("command")
-        response = CStr(ActiveWindow.handle)
+        
+        If ActiveWindow.handle = 0 Then
+            response.Add "error", "Window '" & req.Item("command") & "' not found"
+        Else
+            response.Add "handle", ActiveWindow.handle
+        End If
 
     ElseIf cmd_type = "keys" Then
-        'Send keystrokes to the current active window
-        ActiveWindow.typeKeys req.Item("command")
+    
+        If ActiveWindow.handle = 0 Then
+            response.Add "error", "No window is active"
+        Else
+            'Send keystrokes to the current active window
+            ActiveWindow.typeKeys req.Item("command")
+        End If
 
     ElseIf cmd_type = "message" Then
-        'Send a message to the current active window
-        ActiveWindow.sendMessage req.Item("command")
+        If ActiveWindow.handle = 0 Then
+            response.Add "error", "No window is active"
+        Else
+            'Send a message to the current active window
+            ActiveWindow.sendMessage req.Item("command")
+        End If
 
     ElseIf cmd_type = "setspeed" Then
         'Set the speed of C2
         setSpeed req.Item("acceleration"), req.Item("sleeptime")
     
     ElseIf cmd_type = "activatewindow" Then
-        'Activate the current window
-        ActiveWindow.activate
+        If ActiveWindow.handle = 0 Then
+            response.Add "error", "No window is active"
+        Else
+            'Activate the current window
+            ActiveWindow.activate
+        End If
 
     ElseIf cmd_type = "movewindow" Then
-        'Move the current active window
-        ActiveWindow.moveWindow req.Item("x"), req.Item("y"), req.Item("width"), req.Item("height"), req.Item("repaint")
+        If ActiveWindow.handle = 0 Then
+            response.Add "error", "No window is active"
+        Else
+            'Move the current active window
+            ActiveWindow.moveWindow req.Item("x"), req.Item("y"), req.Item("width"), req.Item("height"), req.Item("repaint")
+        End If
     
     ElseIf cmd_type = "setcursor" Then
-        'Move the cursor
-        ActiveWindow.setCursor req.Item("x"), req.Item("y")
+        If ActiveWindow.handle = 0 Then
+            response.Add "error", "No window is active"
+        Else
+            'Move the cursor
+            ActiveWindow.setCursor req.Item("x"), req.Item("y")
+        End If
     
     ElseIf cmd_type = "click" Then
         'Click down
@@ -157,7 +203,7 @@ Function executeCommand(req As Object) As String
 
     ElseIf cmd_type = "getpath" Then
         'Get the current set path
-        response = current_path
+        response.Add "current_path", current_path
 
     ElseIf cmd_type = "setpath" Then
         'Set the current path
@@ -165,11 +211,15 @@ Function executeCommand(req As Object) As String
     
     ElseIf cmd_type = "getprocesspath" Then
         'Get the path of the process of the active window
-        response = ActiveWindow.getProcessPath(True)
+        response.Add "process_path", ActiveWindow.getProcessPath(True)
+    
+    ElseIf cmd_type = "sleep" Then
+        'Sleep for the given amount of ms
+        Sleep req.Item("command")
     
     End If
     
-    executeCommand = response
+    Set executeCommand = response
 End Function
 Function setSpeed(acceleration As Double, Optional sleeptime As Integer = 5) As Boolean
     Dim msgObject As Dictionary

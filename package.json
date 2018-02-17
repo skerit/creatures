@@ -1,7 +1,7 @@
 {
 	"name": "creatures",
 	"description": "Library to interface with the Creatures 2 game",
-	"version": "0.2.0",
+	"version": "0.2.1-alpha",
 	"author": "Jelle De Loecker <jelle@develry.be>",
 	"keywords": ["creatures", "sfc", "caos", "norns", "norn", "ettin", "grendel", "shee", "albia"],
 	"repository": "git@github.com:skerit/creatures.git",

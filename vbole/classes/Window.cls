@@ -185,16 +185,28 @@ Public Sub activate()
     'Set active window by the handle
     SetForegroundWindow handle
     
+    'Sleep for at least 50ms
+    Sleep 50
+    
     'We could also use AppActivate, but that needs the title
     'So is less precise
     ''AppActivate title
 End Sub
-Public Sub typeKeys(keys As String, Optional wait As Boolean = True)
-    'Activate the window
-    activate
+Public Sub typeKeys(keys As String, Optional wait As Boolean = True, Optional do_activate As Boolean = True)
+    Dim WshShell As Object
+    
+    'Activate the window if wanted
+    If do_activate Then
+        activate
+    End If
+    
+    'Create the wscript shell
+    Set WshShell = CreateObject("wscript.shell")
     
     'Send the keys and wait for it to return
-    SendKeys keys, wait
+    WshShell.SendKeys keys, wait
+    
+    Set WshShell = Nothing
 End Sub
 'Get the path of the process
 Public Function getProcessPath(Optional FullSpec As Boolean = True) As String
