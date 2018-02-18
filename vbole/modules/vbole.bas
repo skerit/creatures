@@ -84,8 +84,6 @@ Public Sub Main()
         If args.Exists("do_debug") Then
             do_debug = args.Item("do_debug")
         End If
-        
-        WriteDebug "Error Dialog Check is currently " & error_dialog_check
     Else
         Set args = New Dictionary
     End If
@@ -100,8 +98,6 @@ ListenLoop:
     Do
         'Get the string input
         in_string = ReadStdIn()
-        
-        WriteDebug "Received input: " & in_string
         
         'Parse the JSON payload
         Set req = JSON.parse(in_string)
@@ -168,8 +164,6 @@ Public Function gotErrorDialog(Optional send_to_stderr As Boolean = True, Option
     'Default result value is false
     gotErrorDialog = False
     
-    Call WriteDebug("Going to look for Error Dialogs, send_to_stderr = " & send_to_stderr)
-    
     'See if there is an error dialog open
     Set C2Error = C2Window.getChildWindow("Creatures 2")
     
@@ -192,8 +186,6 @@ Public Function gotErrorDialog(Optional send_to_stderr As Boolean = True, Option
         error_res.Add "error", "DialogBox"
         error_res.Add "handle", C2Error.handle
         error_res.Add "elements", C2Error.getAllChildElements(True)
-        
-        WriteDebug "SENDTOSTDERR = " & send_to_stderr
         
         'Write to the error output
         If send_to_stderr = True Then
@@ -219,8 +211,6 @@ Public Function gotErrorDialog(Optional send_to_stderr As Boolean = True, Option
             Exit Do
         End If
     Loop
-    
-    WriteDebug "Exiting error dialog checker"
 End Function
 'Execute multiple request after another
 Function executeCommands(commands As Collection) As String
@@ -258,8 +248,6 @@ Function executeCommand(req As Object) As Dictionary
     
     'Do the dialog error check by default
     do_error_check = True
-    
-    WriteDebug "Executing command " & cmd_type
     
     If cmd_type = "checkerrordialog" Then
         Set ref_response = New Dictionary
@@ -385,17 +373,11 @@ Function executeCommand(req As Object) As Dictionary
     
     End If
     
-    WriteDebug "Finished command " & cmd_type
-    
-    WriteDebug "ErrorDialogCheck = " & error_dialog_check
-    WriteDebug "DoErrorCheck = " & do_error_check
-    
     'Did a dialog box pop up during this command?
     'Then we have to add an error
     If error_dialog_check = True And do_error_check = True And response.Exists("error") = False Then
-        WriteDebug "Doing another dialog error check"
         If gotErrorDialog() = True Then
-            WriteDebug " -- Adding error to command response of " & cmd_type & " because a dialog appeared"
+            WriteDebug "Adding error to command response of " & cmd_type & " because a dialog appeared"
             response.Add "error", "A dialog box popped up"
         End If
     End If
@@ -413,7 +395,7 @@ Function setSpeed(acceleration As Double, Optional sleeptime As Integer = 5) As 
         C2Speed.loadByTitle "Skerit's C2 Speedhack"
         
         If C2Speed.handle = 0 Then
-            Debug.Print "Speedhack window not yet found, injecting DLL into '" & C2Window.title & "'"
+            WriteDebug "Speedhack window not yet found, injecting DLL into '" & C2Window.title & "'"
 
             'Inject the DLL (current_path is actually set from within node)
             C2Window.injectDll current_path & "\speedhack.dll"
