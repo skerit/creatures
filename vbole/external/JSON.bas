@@ -159,7 +159,7 @@ End Function
 '
 '   parse string
 '
-Private Function parseString(ByRef str As String, ByRef index As Long) As String
+Public Function parseString(ByRef str As String, ByRef index As Long) As String
 
    Dim quote   As String
    Dim Char    As String

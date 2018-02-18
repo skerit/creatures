@@ -20,6 +20,12 @@ Dim ActiveWindow As Window
 'The current path
 Dim current_path As String
 
+'Enable detecting error dialogs?
+Dim error_dialog_check As Boolean
+
+'Do debug?
+Dim do_debug As Boolean
+
 'Window classes
 Public WindowClasses As New WindowClass
 
@@ -28,6 +34,8 @@ Private Declare Function GetStdHandle Lib "kernel32" (ByVal nStdHandle As Long) 
 Private Declare Function ReadFile Lib "kernel32" (ByVal hFile As Long, lpBuffer As Any, ByVal nNumberOfBytesToRead As Long, lpNumberOfBytesRead As Long, lpOverlapped As Any) As Long
 Private Declare Function WriteFile Lib "kernel32" (ByVal hFile As Long, lpBuffer As Any, ByVal nNumberOfBytesToWrite As Long, lpNumberOfBytesWritten As Long, lpOverlapped As Any) As Long
 Private Declare Function FlushFileBuffers Lib "kernel32" (ByVal hFile As Long) As Long
+Public Declare Function SetTimer Lib "user32" (ByVal hWnd As Long, ByVal nIDEvent As Long, ByVal uElapse As Long, ByVal lpTimerFunc As Long) As Long
+Public Declare Function KillTimer Lib "user32" (ByVal hWnd As Long, ByVal nIDEvent As Long) As Long
 
 'Constants
 Private Const STD_ERROR_HANDLE As Long = -12&
@@ -36,34 +44,64 @@ Private Const STD_INPUT_HANDLE = -10&
 Private Const STATUS_SUCCESS = 0
 'The entry function
 Public Sub Main()
-On Error GoTo ERR_HANDLER
+'On Error GoTo ERR_HANDLER
 
     Dim test_window As Window
     Dim test_long As Long
     Dim test_coll As Collection
+    Dim test_string As String
 
     Dim in_string As String
     Dim out_string As String
     Dim response As String
     Dim res_req As Dictionary
     Dim req As Object
+    Dim args As Dictionary
     Dim error_res As Dictionary
     Dim error_reply As Dictionary
+    
+    'Automatically look for error dialogs
+    error_dialog_check = True
+    
+    'Disable debug by default
+    do_debug = False
     
     'Create the internal Window class instances
     Set C2Window = New Window
     Set C2Speed = New Window
+    
+    'Load passed json arguments
+    in_string = Trim(Command)
+    
+    If in_string <> "" Then
+        in_string = JSON.parseString(in_string, 1)
+        Set args = JSON.parse(in_string)
+        
+        If args.Exists("error_dialog_check") Then
+            error_dialog_check = args.Item("error_dialog_check")
+        End If
+        
+        If args.Exists("do_debug") Then
+            do_debug = args.Item("do_debug")
+        End If
+        
+        WriteDebug "Error Dialog Check is currently " & error_dialog_check
+    Else
+        Set args = New Dictionary
+    End If
 
     'The C2Window should not be a dialog box
     C2Window.search_for_dialog = 0
     
     'Get the C2 window
     C2Window.loadByTitles ".sfc - Creatures 2", "- Creatures 2", "Creatures 2"
-    
+
 ListenLoop:
     Do
         'Get the string input
         in_string = ReadStdIn()
+        
+        WriteDebug "Received input: " & in_string
         
         'Parse the JSON payload
         Set req = JSON.parse(in_string)
@@ -71,11 +109,14 @@ ListenLoop:
         'Create the OLE connection to C2
         '(will start C2 if it isn't running yet)
         If App Is Nothing Then
+            WriteDebug "Creating SFC2.OLE instance"
             Set App = CreateObject("SFC2.OLE")
         End If
         
         'If C2 is no longer running, start it again
         If C2Window.is_running = False Then
+            WriteDebug "Restarting SFC2.OLE"
+
             'Load C2 again
             Set App = CreateObject("SFC2.OLE")
             
@@ -91,7 +132,9 @@ ListenLoop:
         End If
         
         'See if any error dialogs have popped up
-        Call gotErrorDialog
+        If error_dialog_check Then
+            Call gotErrorDialog
+        End If
         
         'Is this 1 command or multiple?
         If TypeName(req) = "Collection" Then
@@ -113,48 +156,71 @@ GoTo ListenLoop
     
 byebye:
 End Sub
+'Timer test
+Sub TimerProc(ByVal hWnd As Long, ByVal nIDEvent As Long, ByVal uElapse As Long, ByVal lpTimerFunc As Long)
+    Debug.Print "TIMER!!"
+End Sub
 'See if any dialog boxes pop up and handle them!
-Public Function gotErrorDialog() As Boolean
+Public Function gotErrorDialog(Optional send_to_stderr As Boolean = True, Optional ByRef ref_response As Dictionary) As Boolean
     Dim error_res As Dictionary
     Dim error_reply As Dictionary
     
     'Default result value is false
     gotErrorDialog = False
     
-    Call WriteDebug("Going to look for Error Dialogs")
+    Call WriteDebug("Going to look for Error Dialogs, send_to_stderr = " & send_to_stderr)
     
     'See if there is an error dialog open
     Set C2Error = C2Window.getChildWindow("Creatures 2")
     
     'Error window found!
     Do While C2Error.handle <> 0
+        WriteDebug "Current error handle is " & C2Error.handle
+
         'Yup, there was an error!
         gotErrorDialog = True
+        
+        WriteDebug "Refresponse is " & TypeName(ref_response)
 
-        Set error_res = New Dictionary
+        If TypeName(ref_response) = "Nothing" Or IsMissing(ref_response) = True Then
+            Set error_res = New Dictionary
+        Else
+            WriteDebug "Using REFERENCE DICTIONARY for error dialog check"
+            Set error_res = ref_response
+        End If
+
         error_res.Add "error", "DialogBox"
+        error_res.Add "handle", C2Error.handle
         error_res.Add "elements", C2Error.getAllChildElements(True)
         
-        Call WriteDebug("Found Error Dialog, going to wait for response")
+        WriteDebug "SENDTOSTDERR = " & send_to_stderr
         
         'Write to the error output
-        WriteStdErr JSON.toString(error_res)
+        If send_to_stderr = True Then
+            WriteDebug "Found Error Dialog, going to wait for response"
+            WriteStdErr JSON.toString(error_res)
         
-        'Wait for the error reply!
-        Set error_reply = JSON.parse(ReadStdIn())
+            'Wait for the error reply!
+            Set error_reply = JSON.parse(ReadStdIn())
         
-        'For now we only listen for the "close" command
-        If error_reply.Item("type") = "close" Then
-            C2Error.closeWindow
-            Sleep 200
+            'For now we only listen for the "close" command
+            If error_reply.Item("type") = "close" Then
+                C2Error.closeWindow
+                Sleep 200
+            End If
+            
+            'Debug code...
+            'WriteStdErr JSON.toString(error_reply) & vbCrLf
+        
+            'See if a new error window popped up
+            Set C2Error = C2Window.getChildWindow("Creatures 2")
+        Else
+            'Send to stderr is disabled, so we only check once
+            Exit Do
         End If
-        
-        'Debug code...
-        'WriteStdErr JSON.toString(error_reply) & vbCrLf
-    
-        'See if a new error window popped up
-        Set C2Error = C2Window.getChildWindow("Creatures 2")
     Loop
+    
+    WriteDebug "Exiting error dialog checker"
 End Function
 'Execute multiple request after another
 Function executeCommands(commands As Collection) As String
@@ -183,16 +249,30 @@ Function executeCommand(req As Object) As Dictionary
     Dim response As New Dictionary
     Dim str_result As String
     Dim cmd_type As String
+    Dim caos_succeeded As Boolean
+    Dim do_error_check As Boolean
+    Dim ref_response As Dictionary
+    Dim var_type As String
+
     cmd_type = req.Item("type")
     
+    'Do the dialog error check by default
+    do_error_check = True
+    
     WriteDebug "Executing command " & cmd_type
-
-    If cmd_type = "caos" Then
+    
+    If cmd_type = "checkerrordialog" Then
+        Set ref_response = New Dictionary
+        response.Add "result", gotErrorDialog(False, ref_response)
+        response.Add "elements", ref_response
+        do_error_check = False
+    ElseIf cmd_type = "caos" Then
         'Send the command to C2
-        App.firecommand 1, req.Item("command"), str_result
+        caos_succeeded = App.firecommand(1, req.Item("command"), str_result)
         
         'Add the result to the respone
         response.Add "result", str_result
+        response.Add "caos_succeeded", caos_succeeded
 
     ElseIf cmd_type = "c2window" Then
         'Set the ActiveWindow to C2Window
@@ -204,10 +284,25 @@ Function executeCommand(req As Object) As Dictionary
             response.Add "handle", C2Window.handle
         End If
 
+    ElseIf cmd_type = "geterrordialog" Then
+        Set ActiveWindow = C2Window.getChildWindow("Creatures 2")
+        
+        If ActiveWindow.handle = 0 Then
+            response.Add "error", "No error dialog found"
+        Else
+            response.Add "handle", ActiveWindow.handle
+        End If
+
     ElseIf cmd_type = "window" Then
         'Load a window by title as the active window
         Set ActiveWindow = New Window
-        ActiveWindow.loadByTitle req.Item("command")
+        var_type = TypeName(req.Item("command"))
+        
+        If var_type = "String" Then
+            ActiveWindow.loadByTitle req.Item("command")
+        Else
+            ActiveWindow.loadByHandle req.Item("command")
+        End If
         
         If ActiveWindow.handle = 0 Then
             response.Add "error", "Window '" & req.Item("command") & "' not found"
@@ -292,11 +387,17 @@ Function executeCommand(req As Object) As Dictionary
     
     WriteDebug "Finished command " & cmd_type
     
+    WriteDebug "ErrorDialogCheck = " & error_dialog_check
+    WriteDebug "DoErrorCheck = " & do_error_check
+    
     'Did a dialog box pop up during this command?
     'Then we have to add an error
-    If gotErrorDialog() And Not response.Exists("error") Then
-        WriteDebug "Adding error to command response of " & cmd_type & " because a dialog appeared"
-        response.Add "error", "A dialog box popped up"
+    If error_dialog_check = True And do_error_check = True And response.Exists("error") = False Then
+        WriteDebug "Doing another dialog error check"
+        If gotErrorDialog() = True Then
+            WriteDebug " -- Adding error to command response of " & cmd_type & " because a dialog appeared"
+            response.Add "error", "A dialog box popped up"
+        End If
     End If
     
     Set executeCommand = response
@@ -437,6 +538,10 @@ End Sub
 'Write a debug to the error output
 Sub WriteDebug(ByVal Text As String)
     On Error GoTo fallback
+    
+    If do_debug = False Then
+        Exit Sub
+    End If
     
     'Write the debug message to StdErr
     WriteStdErr "[DEBUG] " & Text & vbCrLf

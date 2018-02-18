@@ -8,6 +8,8 @@
 * The `SFCOle` class will now emit `vbole_error` errors, for when certain dialogs pop up
 * The `CreaturesApplication` class will forward these errors as either `error_dialogbox` or `error_vbole`. A callback is provided with which you have to respond.
 * [VB] Add `WriteDebug` method & flush outputs
+* [VB] Another VBOle instance is created for monitoring error dialogs during CAOS commands
+* [VB] VBOle now accepts a startup argument as json
 
 ## 0.2.0 (2018-02-17)
 
