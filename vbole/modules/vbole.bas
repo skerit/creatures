@@ -27,6 +27,7 @@ Public WindowClasses As New WindowClass
 Private Declare Function GetStdHandle Lib "kernel32" (ByVal nStdHandle As Long) As Long
 Private Declare Function ReadFile Lib "kernel32" (ByVal hFile As Long, lpBuffer As Any, ByVal nNumberOfBytesToRead As Long, lpNumberOfBytesRead As Long, lpOverlapped As Any) As Long
 Private Declare Function WriteFile Lib "kernel32" (ByVal hFile As Long, lpBuffer As Any, ByVal nNumberOfBytesToWrite As Long, lpNumberOfBytesWritten As Long, lpOverlapped As Any) As Long
+Private Declare Function FlushFileBuffers Lib "kernel32" (ByVal hFile As Long) As Long
 
 'Constants
 Private Const STD_ERROR_HANDLE As Long = -12&
@@ -89,33 +90,8 @@ ListenLoop:
             Set C2Speed = New Window
         End If
         
-        'See if there is an error dialog open
-        Set C2Error = C2Window.getChildWindow("Creatures 2")
-        
-        'Error window found!
-        Do While C2Error.handle <> 0
-            Set error_res = New Dictionary
-            error_res.Add "error", "DialogBox"
-            error_res.Add "elements", C2Error.getAllChildElements(True)
-            
-            'Write to the error output
-            WriteStdErr JSON.toString(error_res)
-            
-            'Wait for the error reply!
-            Set error_reply = JSON.parse(ReadStdIn())
-            
-            'For now we only listen for the "close" command
-            If error_reply.Item("type") = "close" Then
-                C2Error.closeWindow
-                Sleep 200
-            End If
-            
-            'Debug code...
-            'WriteStdErr JSON.toString(error_reply) & vbCrLf
-        
-            'See if a new error window popped up
-            Set C2Error = C2Window.getChildWindow("Creatures 2")
-        Loop
+        'See if any error dialogs have popped up
+        Call gotErrorDialog
         
         'Is this 1 command or multiple?
         If TypeName(req) = "Collection" Then
@@ -137,6 +113,49 @@ GoTo ListenLoop
     
 byebye:
 End Sub
+'See if any dialog boxes pop up and handle them!
+Public Function gotErrorDialog() As Boolean
+    Dim error_res As Dictionary
+    Dim error_reply As Dictionary
+    
+    'Default result value is false
+    gotErrorDialog = False
+    
+    Call WriteDebug("Going to look for Error Dialogs")
+    
+    'See if there is an error dialog open
+    Set C2Error = C2Window.getChildWindow("Creatures 2")
+    
+    'Error window found!
+    Do While C2Error.handle <> 0
+        'Yup, there was an error!
+        gotErrorDialog = True
+
+        Set error_res = New Dictionary
+        error_res.Add "error", "DialogBox"
+        error_res.Add "elements", C2Error.getAllChildElements(True)
+        
+        Call WriteDebug("Found Error Dialog, going to wait for response")
+        
+        'Write to the error output
+        WriteStdErr JSON.toString(error_res)
+        
+        'Wait for the error reply!
+        Set error_reply = JSON.parse(ReadStdIn())
+        
+        'For now we only listen for the "close" command
+        If error_reply.Item("type") = "close" Then
+            C2Error.closeWindow
+            Sleep 200
+        End If
+        
+        'Debug code...
+        'WriteStdErr JSON.toString(error_reply) & vbCrLf
+    
+        'See if a new error window popped up
+        Set C2Error = C2Window.getChildWindow("Creatures 2")
+    Loop
+End Function
 'Execute multiple request after another
 Function executeCommands(commands As Collection) As String
     Dim response As New Collection
@@ -165,6 +184,8 @@ Function executeCommand(req As Object) As Dictionary
     Dim str_result As String
     Dim cmd_type As String
     cmd_type = req.Item("type")
+    
+    WriteDebug "Executing command " & cmd_type
 
     If cmd_type = "caos" Then
         'Send the command to C2
@@ -267,6 +288,15 @@ Function executeCommand(req As Object) As Dictionary
         'Sleep for the given amount of ms
         Sleep req.Item("command")
     
+    End If
+    
+    WriteDebug "Finished command " & cmd_type
+    
+    'Did a dialog box pop up during this command?
+    'Then we have to add an error
+    If gotErrorDialog() And Not response.Exists("error") Then
+        WriteDebug "Adding error to command response of " & cmd_type & " because a dialog appeared"
+        response.Add "error", "A dialog box popped up"
     End If
     
     Set executeCommand = response
@@ -381,6 +411,8 @@ Sub WriteStdOut(ByVal Text As String)
         Err.Raise 1001, , "Unable to write to standard output"
     ElseIf BytesWritten < Len(Text) Then
         Err.Raise 1002, , "Incomplete write operation"
+    Else
+        FlushFileBuffers StdOut
     End If
 End Sub
 'Write to the error output
@@ -398,5 +430,18 @@ Sub WriteStdErr(ByVal Text As String)
         Err.Raise 1001, , "Unable to write to error output"
     ElseIf BytesWritten < Len(Text) Then
         Err.Raise 1002, , "Incomplete write operation"
+    Else
+        FlushFileBuffers StdErr
     End If
+End Sub
+'Write a debug to the error output
+Sub WriteDebug(ByVal Text As String)
+    On Error GoTo fallback
+    
+    'Write the debug message to StdErr
+    WriteStdErr "[DEBUG] " & Text & vbCrLf
+    
+    Exit Sub
+fallback:
+    Debug.Print Text
 End Sub
