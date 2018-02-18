@@ -67,6 +67,19 @@ End Property
 Public Property Get class_name() As String
     class_name = windows.getClassName(handle)
 End Property
+Public Function toJSON() As Dictionary
+    Dim result As New Dictionary
+    
+    result.Add "_type", "Window"
+    result.Add "handle", Me.handle
+    result.Add "title", Me.title
+    result.Add "class", Me.class_name
+    result.Add "class_readable", WindowClasses.getReadableName(Me.class_name)
+    result.Add "width", Me.width
+    result.Add "height", Me.height
+    
+    Set toJSON = result
+End Function
 'Load the process id
 Public Function loadProcId() As Long
     ' Process id will be stored in idProc, the thread id is returned to threadId
@@ -134,7 +147,7 @@ Public Function loadByHandle(handle_param As Long)
     temp_title = Space(256)
     
     'Get the title text (stored in titletmp)
-    temp_length = GetWindowText(handle, temp_title, Len(temp_title))
+    temp_length = GetWindowTextI(handle, temp_title, Len(temp_title))
     
     'Trim the result
     title = left(temp_title, temp_length)
@@ -152,26 +165,26 @@ Public Sub removeDll(path As String)
     Injector.UnInject_Dll path, CStr(proc_id)
 End Sub
 'Send a message to this form
-Public Sub SendMessage(message As String)
+Public Sub SendMessage(Message As String)
     Dim cds As CopyData
     Dim buf() As Byte
-    ReDim buf(1 To LenB(message))
-    Call CopyMemory(buf(1), ByVal message, Len(message))
+    ReDim buf(1 To LenB(Message))
+    Call CopyMemory(buf(1), ByVal Message, Len(Message))
     
     'Add data to the packet
     cds.dwData = 1
-    cds.cbData = Len(message) * 2
+    cds.cbData = Len(Message) * 2
     cds.lpData = VarPtr(buf(1))
     
     sendMessageI handle, WM_COPYDATA, 0, cds
 End Sub
 Public Sub sendJSON(payload)
-    Dim message As String
+    Dim Message As String
     
     'Stringify the payload
-    message = JSON.toString(payload)
+    Message = JSON.toString(payload)
     
-    SendMessage (message)
+    SendMessage (Message)
 End Sub
 'Move this window
 Public Sub moveWindow(X As Long, Y As Long, width As Long, height As Long, Optional repaint As Long = 1)
@@ -180,20 +193,51 @@ End Sub
 Public Sub showWindow()
     showWindowI handle, 5
 End Sub
+'Get all child elements on this window
+Public Function getAllChildElements(Optional ByVal recursive As Boolean = True) As Collection
+    Set getAllChildElements = windows.getAllChildElementsOfWindow(handle, recursive)
+End Function
+'Get all the child windows of this one
 Public Sub getAllChildWindows()
     Dim result As New Collection
-    Dim Value As Variant
+    Dim value As Variant
     Dim Child As Window
     
-    findChildWindowHandles handle, result
+    windows.findChildWindowHandles handle, result
     
-    For Each Value In result
-        Debug.Print "Found child " & Value
-        Set Child = New Window
-        Child.loadByHandle CLng(Value)
-        Debug.Print " -- " & Child.title & " - " & Child.width
-    Next Value
+    For Each value In result
+        Debug.Print "Found child " & value
+        Debug.Print " -- Class " & windows.getClassName(value)
+        Debug.Print " -- Text " & windows.getWindowText(value)
+        'Set Child = New Window
+        'Child.loadByHandle CLng(Value)
+        'Debug.Print " -- " & Child.title & " - " & Child.width
+    Next value
 End Sub
+'Get all child windows
+Public Function getAllChildWindowsTwo(Optional title As String) As Collection
+    Dim child_window As Window
+    Dim all_windows As New Collection
+    Dim all_handles As Collection
+    Dim child_handle As Long
+    Dim i As Integer
+    
+    'Get all the handles matching the title
+    Set all_handles = windows.findAllWindows(title, TryAll)
+    
+    'Iterate through all the handles
+    For i = 1 To all_handles.Count
+        child_handle = all_handles(i)
+        
+        Debug.Print "Class of " & child_handle & " = " & windows.getClassName(child_handle)
+        
+        'Set child_window = New Window
+        'child_window.loadByHandle all_handles(i)
+        'all_windows.Append child_window
+    Next
+    
+    Set getAllChildWindowsTwo = all_windows
+End Function
 'Get a window that has the current window as a parent handle
 Public Function getChildWindow(title As String) As Window
     Dim child_handle As Long
@@ -290,9 +334,9 @@ Public Property Get left() As Long
     left = pLeft
 End Property
 'Window Left (X) setter
-Public Property Let left(ByVal Value As Long)
+Public Property Let left(ByVal value As Long)
     updateCoordinates
-    pLeft = Value
+    pLeft = value
     moveWindow pLeft, pTop, pWidth, pHeight
 End Property
 'Window Right getter
@@ -301,9 +345,9 @@ Public Property Get right() As Long
     right = pRight
 End Property
 'Window Right setter
-Public Property Let right(ByVal Value As Long)
+Public Property Let right(ByVal value As Long)
     updateCoordinates
-    pRight = Value
+    pRight = value
     pLeft = pRight - pWidth
     moveWindow pLeft, pTop, pWidth, pHeight
 End Property
@@ -313,9 +357,9 @@ Public Property Get top() As Long
     top = pTop
 End Property
 'Window Top (Y) setter
-Public Property Let top(ByVal Value As Long)
+Public Property Let top(ByVal value As Long)
     updateCoordinates
-    pTop = Value
+    pTop = value
     moveWindow pLeft, pTop, pWidth, pHeight
 End Property
 'Window Bottom getter
@@ -324,9 +368,9 @@ Public Property Get bottom() As Long
     bottom = pBottom
 End Property
 'Window Bottom setter
-Public Property Let bottom(ByVal Value As Long)
+Public Property Let bottom(ByVal value As Long)
     updateCoordinates
-    pBottom = Value
+    pBottom = value
     pTop = pBottom - pHeight
     moveWindow pLeft, pTop, pWidth, pHeight
 End Property
@@ -336,9 +380,9 @@ Public Property Get width() As Long
     width = pWidth
 End Property
 'Window width setter
-Public Property Let width(ByVal Value As Long)
+Public Property Let width(ByVal value As Long)
     updateCoordinates
-    pWidth = Value
+    pWidth = value
     moveWindow pLeft, pTop, pWidth, pHeight
 End Property
 'Window height getter
@@ -347,9 +391,9 @@ Public Property Get height() As Long
     height = pHeight
 End Property
 'Window height setter
-Public Property Let height(ByVal Value As Long)
+Public Property Let height(ByVal value As Long)
     updateCoordinates
-    pHeight = Value
+    pHeight = value
     moveWindow pLeft, pTop, pWidth, pHeight
 End Property
 'Set the cursor to a position inside this window

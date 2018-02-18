@@ -9,6 +9,7 @@ Module=JSON; external\JSON.bas
 Module=CAOSole; modules\vbole.bas
 Module=Windows; modules\Windows.bas
 Module=Mouse; modules\Mouse.bas
+Class=WindowClass; ..\..\..\..\..\documents\creatures\c2\wolfsrc\WindowClass.cls
 Startup="Sub Main"
 HelpFile=""
 Title="vbole"

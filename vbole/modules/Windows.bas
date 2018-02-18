@@ -1,17 +1,19 @@
 Attribute VB_Name = "Windows"
 Public prog As String
-Private Declare Function FindWindow Lib "User32.dll" Alias "FindWindowA" (ByVal lpClassName As Any, ByVal lpWindowName As Any) As Long
-Private Declare Function GetWindow Lib "User32.dll" (ByVal hWnd As Long, ByVal wCmd As Long) As Long
-Public Declare Function GetWindowText Lib "User32.dll" Alias "GetWindowTextA" (ByVal hWnd As Long, ByVal lpString As String, ByVal nMaxCount As Long) As Long
+Private Declare Function FindWindow Lib "user32.dll" Alias "FindWindowA" (ByVal lpClassName As Any, ByVal lpWindowName As Any) As Long
+Private Declare Function GetWindow Lib "user32.dll" (ByVal hWnd As Long, ByVal wCmd As Long) As Long
+Public Declare Function GetWindowTextI Lib "user32.dll" Alias "GetWindowTextA" (ByVal hWnd As Long, ByVal lpString As String, ByVal nMaxCount As Long) As Long
 Private Declare Function GetWindowTextLength Lib "user32" Alias "GetWindowTextLengthA" (ByVal hWnd As Long) As Long
-Public Declare Function GetParent Lib "User32.dll" (ByVal hWnd As Long) As Long
+Public Declare Function GetParent Lib "user32.dll" (ByVal hWnd As Long) As Long
 Private Declare Function GetWindowThreadProcessId Lib "user32" (ByVal hWnd As Long, lpdwprocessid As Long) As Long
 Private Declare Function EnumWindows Lib "user32" (ByVal lpEnumFunc As Long, ByVal lParam As Long) As Long
-Private Declare Function EnumChildWindows Lib "user32" (ByVal hWndParent As Long, ByVal lpEnumFunc As Long, ByVal lParam As Long) As Long
+Private Declare Function EnumChildWindows Lib "user32" (ByVal hwndParent As Long, ByVal lpEnumFunc As Long, ByVal lParam As Long) As Long
 Private Declare Function GetWindowRect Lib "user32" (ByVal hWnd As Long, lpRect As WindowRect) As Long
 Private Declare Function sendMessageI Lib "user32" Alias "SendMessageW" (ByVal hWnd As Long, ByVal wMsg As Long, ByVal wParam As Long, lParam As Any) As Long
 Private Declare Function SendMessageA Lib "user32" (ByVal hWnd As Long, ByVal wMsg As Long, ByVal wParam As Long, lParam As Any) As Long
 Public Declare Sub Sleep Lib "kernel32.dll" (ByVal dwMilliseconds As Long)
+
+Public Declare Function findWindowEx Lib "user32.dll" Alias "FindWindowExA" (ByVal hwndParent As Long, Optional ByVal hwndChildAfter As Long, Optional ByVal lpszClass As String, Optional ByVal lpszWindow As String) As Long
 
 Private Declare Function GetClassNameI Lib "user32" Alias "GetClassNameA" (ByVal hWnd As Long, _
                                                                           ByVal lpClassName As String, _
@@ -64,6 +66,9 @@ Public Sub findChildWindowHandles(parent_handle As Long, ByRef child_windows As 
     handle_tmp = FindWindow(0&, 0&)
     
     Do Until handle_tmp = 0
+        If handle_tmp = 3146760 Then
+            Debug.Print "Checking handle " & handle_tmp
+        End If
 
         If GetParent(handle_tmp) = parent_handle Then
             child_windows.Add handle_tmp
@@ -89,6 +94,24 @@ Public Function containsValue(ByRef coll As Collection, ByVal val As Variant) As
     
     'Default false value
     containsValue = False
+End Function
+'Get the text of a handle
+Public Function getWindowText(ByVal handle As Long) As String
+    Dim temp_title As String
+    Dim temp_length As Long
+    
+    'Prepare a string where the text will go in
+    temp_title = Space(256)
+        
+    'Get the title text (stored in titletmp)
+    temp_length = GetWindowTextI(handle, temp_title, Len(temp_title))
+
+    If temp_length Then
+        'Remove the extra bits from the placeholder
+        temp_title = left(temp_title, temp_length)
+    End If
+
+    getWindowText = Trim(temp_title)
 End Function
 'Improved version of finding window handles: this will return a collection of all matching windows
 Public Function findAllWindows(ByVal title_part, Optional method As SearchMethod = TryAll) As Collection
@@ -149,7 +172,7 @@ Public Function findAllWindows(ByVal title_part, Optional method As SearchMethod
         temp_title = Space(256)
         
         'Get the title text (stored in titletmp)
-        temp_length = GetWindowText(temp_handle, temp_title, Len(temp_title))
+        temp_length = GetWindowTextI(temp_handle, temp_title, Len(temp_title))
 
         If temp_length Then
             'Remove the extra bits from the placeholder
@@ -235,7 +258,7 @@ Public Function findwindowpartial(ByVal titlepart$, method As SearchMethod, Opti
             
             'Get the title text (stored in titletmp)
             'nret is the length
-            nret = GetWindowText(hwndtmp, titletmp, Len(titletmp))
+            nret = GetWindowTextI(hwndtmp, titletmp, Len(titletmp))
             
             If nret Then
                 'Remove the extra bits from the placeholder
@@ -421,5 +444,50 @@ Public Sub sendCloseMessage(ByVal handle As Long)
     Else
         Call SendMessageA(handle, WM_CLOSE, 0, ByVal 0&)
     End If
-    
 End Sub
+'Get all child elements of the given handle
+Public Function getAllChildElementsOfWindow(ByVal handle As Long, Optional recursive As Boolean = True) As Collection
+    Dim result As New Collection
+    Dim child_window As Window
+    Dim temp_col As Collection
+    Dim found_handle As Long
+    Dim i As Integer
+    
+    'Set the starting handle to zero
+    found_handle = 0
+    
+    'Get the first child
+    'child_handle = windows.findWindowEx(handle)
+    
+    Do
+
+        'Get the next handle
+        found_handle = windows.findWindowEx(handle, found_handle)
+        
+        If found_handle = 0 Then
+            Exit Do
+        End If
+        
+        'Create a new instance of the window class (even for labels and such)
+        Set child_window = New Window
+        child_window.loadByHandle found_handle
+        
+        Debug.Print " Child text: " & child_window.title
+        Debug.Print " -- Class:" & child_window.class_name
+        
+        'Add it to the result
+        result.Add child_window
+        
+        'If we should look recursive, do so now
+        If recursive Then
+            Set temp_col = getAllChildElementsOfWindow(found_handle, True)
+            
+            For i = 1 To temp_col.Count
+                result.Add temp_col(i)
+            Next
+        End If
+    
+    Loop Until found_handle = 0
+    
+    Set getAllChildElementsOfWindow = result
+End Function

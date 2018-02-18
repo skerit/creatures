@@ -3,6 +3,8 @@
 * VBOle will now always respond with a JSON object than can optionally contain an error
 * If a command should fail, other commands in the array will no longer be executed
 * The JSON module in VBOle now looks for a `toJSON` function on class instances
+* VBOle can now get all the child elements of a window
+* VBOle will now look for error dialog boxes and inform the library
 
 ## 0.2.0 (2018-02-17)
 

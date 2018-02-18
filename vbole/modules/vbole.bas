@@ -11,11 +11,17 @@ Dim C2Window As Window
 'C2 Speedhack window
 Dim C2Speed As Window
 
+'C2 Error dialog box
+Dim C2Error As Window
+
 'Current active window goes here
 Dim ActiveWindow As Window
 
 'The current path
 Dim current_path As String
+
+'Window classes
+Public WindowClasses As New WindowClass
 
 'External functions
 Private Declare Function GetStdHandle Lib "kernel32" (ByVal nStdHandle As Long) As Long
@@ -31,22 +37,28 @@ Private Const STATUS_SUCCESS = 0
 Public Sub Main()
 On Error GoTo ERR_HANDLER
 
+    Dim test_window As Window
+    Dim test_long As Long
+    Dim test_coll As Collection
+
     Dim in_string As String
     Dim out_string As String
     Dim response As String
     Dim res_req As Dictionary
     Dim req As Object
+    Dim error_res As Dictionary
+    Dim error_reply As Dictionary
     
     'Create the internal Window class instances
     Set C2Window = New Window
     Set C2Speed = New Window
-    
+
     'The C2Window should not be a dialog box
     C2Window.search_for_dialog = 0
     
     'Get the C2 window
     C2Window.loadByTitles ".sfc - Creatures 2", "- Creatures 2", "Creatures 2"
-
+    
 ListenLoop:
     Do
         'Get the string input
@@ -77,6 +89,33 @@ ListenLoop:
             Set C2Speed = New Window
         End If
         
+        'See if there is an error dialog open
+        Set C2Error = C2Window.getChildWindow("Creatures 2")
+        
+        'Error window found!
+        Do While C2Error.handle <> 0
+            Set error_res = New Dictionary
+            error_res.Add "error", "DialogBox"
+            error_res.Add "elements", C2Error.getAllChildElements(True)
+            
+            'Write to the error output
+            WriteStdErr JSON.toString(error_res)
+            
+            'Wait for the error reply!
+            Set error_reply = JSON.parse(ReadStdIn())
+            
+            'For now we only listen for the "close" command
+            If error_reply.Item("type") = "close" Then
+                C2Error.closeWindow
+                Sleep 200
+            End If
+            
+            'Debug code...
+            'WriteStdErr JSON.toString(error_reply) & vbCrLf
+        
+            'See if a new error window popped up
+            Set C2Error = C2Window.getChildWindow("Creatures 2")
+        Loop
         
         'Is this 1 command or multiple?
         If TypeName(req) = "Collection" Then
