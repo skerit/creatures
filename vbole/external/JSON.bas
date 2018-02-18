@@ -72,7 +72,7 @@ Private Function parseObject(ByRef str As String, ByRef index As Long) As Dictio
          index = index + 1
          Call skipChar(str, index)
       ElseIf index > Len(str) Then
-         psErrors = psErrors & "Missing '}': " & Right(str, 20) & vbCrLf
+         psErrors = psErrors & "Missing '}': " & right(str, 20) & vbCrLf
          Exit Do
       End If
 
@@ -117,7 +117,7 @@ Private Function parseArray(ByRef str As String, ByRef index As Long) As Collect
          index = index + 1
          Call skipChar(str, index)
       ElseIf index > Len(str) Then
-         psErrors = psErrors & "Missing ']': " & Right(str, 20) & vbCrLf
+         psErrors = psErrors & "Missing ']': " & right(str, 20) & vbCrLf
          Exit Do
       End If
 
@@ -199,7 +199,7 @@ Private Function parseString(ByRef str As String, ByRef index As Long) As String
                Case "u"
                   index = index + 1
                   Code = Mid(str, index, 4)
-                  SB.Append ChrW(Val("&h" + Code))
+                  SB.Append ChrW(val("&h" + Code))
                   index = index + 4
             End Select
          Case quote
@@ -226,17 +226,17 @@ End Function
 '
 Private Function parseNumber(ByRef str As String, ByRef index As Long)
 
-   Dim Value   As String
+   Dim value   As String
    Dim Char    As String
 
    Call skipChar(str, index)
    Do While index > 0 And index <= Len(str)
       Char = Mid(str, index, 1)
       If InStr("+-0123456789.eE", Char) Then
-         Value = Value & Char
+         value = value & Char
          index = index + 1
       Else
-         parseNumber = CDec(Value)
+         parseNumber = CDec(value)
          Exit Function
       End If
    Loop
@@ -409,13 +409,21 @@ Public Function toString(ByRef obj As Variant) As String
          ElseIf TypeName(obj) = "Collection" Then
 
             SB.Append "["
-            Dim Value
-            For Each Value In obj
+            Dim value
+            For Each value In obj
                If bFI Then bFI = False Else SB.Append ","
-               SB.Append toString(Value)
-            Next Value
+               SB.Append toString(value)
+            Next value
             SB.Append "]"
-
+        
+        'Little addition to the JSON library: toJSON support!
+        ElseIf MethodExists(obj, "toJSON") Then
+            Dim ReplacedValue As Variant
+            Set ReplacedValue = obj.toJSON()
+            
+            toString = toString(ReplacedValue)
+            Set SB = Nothing
+            Exit Function
          End If
       Case vbBoolean
          If obj Then SB.Append "true" Else SB.Append "false"
@@ -430,7 +438,19 @@ Public Function toString(ByRef obj As Variant) As String
    Set SB = Nothing
    
 End Function
+'See if a property exists
+Public Function MethodExists(QueriedObject As Variant, PropertyName As String) As Boolean
 
+'Just resume
+On Error Resume Next
+
+'Actually call the method
+CallByName QueriedObject, PropertyName, VbMethod
+
+'Initialize return value
+MethodExists = (Err.Number <> 438)
+
+End Function
 Private Function Encode(str) As String
 
    Dim SB As New cStringBuilder
@@ -499,7 +519,7 @@ Private Function multiArray(aBD, iBC, sPS, ByRef sPT)   ' Array BoDy, Integer Ba
          If i < iDU Then SB.Append ","
       Next
       SB.Append "]"
-      sPT = Left(sPT, iBC - 2)
+      sPT = left(sPT, iBC - 2)
    End If
    Err.Clear
    multiArray = SB.toString
@@ -557,7 +577,7 @@ Public Function RStoJSON(rs As ADODB.Recordset) As String
             lRecCnt = lRecCnt + 1
             sFlds = ""
             For Each fld In rs.Fields
-               sFlds = (sFlds & IIf(sFlds <> "", ",", "") & """" & fld.name & """:""" & toUnicode(fld.Value & "") & """")
+               sFlds = (sFlds & IIf(sFlds <> "", ",", "") & """" & fld.Name & """:""" & toUnicode(fld.value & "") & """")
             Next 'fld
             sRecs.Append IIf((Trim(sRecs.toString) <> ""), "," & vbCrLf, "") & "{" & sFlds & "}"
             rs.MoveNext
@@ -620,12 +640,12 @@ End Function
 
 Public Function toUnicode(str As String) As String
 
-   Dim x As Long
+   Dim X As Long
    Dim uStr As New cStringBuilder
    Dim uChrCode As Integer
 
-   For x = 1 To Len(str)
-      uChrCode = Asc(Mid(str, x, 1))
+   For X = 1 To Len(str)
+      uChrCode = Asc(Mid(str, X, 1))
       Select Case uChrCode
          Case 8:   ' backspace
             uStr.Append "\b"
@@ -644,9 +664,9 @@ Public Function toUnicode(str As String) As String
          Case 92: ' backslash
             uStr.Append "\\"
          Case 123, 125:  ' "{" and "}"
-            uStr.Append ("\u" & Right("0000" & Hex(uChrCode), 4))
+            uStr.Append ("\u" & right("0000" & Hex(uChrCode), 4))
          Case Is < 32, Is > 127: ' non-ascii characters
-            uStr.Append ("\u" & Right("0000" & Hex(uChrCode), 4))
+            uStr.Append ("\u" & right("0000" & Hex(uChrCode), 4))
          Case Else
             uStr.Append Chr$(uChrCode)
       End Select

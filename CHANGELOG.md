@@ -2,6 +2,7 @@
 
 * VBOle will now always respond with a JSON object than can optionally contain an error
 * If a command should fail, other commands in the array will no longer be executed
+* The JSON module in VBOle now looks for a `toJSON` function on class instances
 
 ## 0.2.0 (2018-02-17)
 
