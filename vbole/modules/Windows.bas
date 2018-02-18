@@ -4,12 +4,20 @@ Private Declare Function FindWindow Lib "User32.dll" Alias "FindWindowA" (ByVal 
 Private Declare Function GetWindow Lib "User32.dll" (ByVal hWnd As Long, ByVal wCmd As Long) As Long
 Public Declare Function GetWindowText Lib "User32.dll" Alias "GetWindowTextA" (ByVal hWnd As Long, ByVal lpString As String, ByVal nMaxCount As Long) As Long
 Private Declare Function GetWindowTextLength Lib "user32" Alias "GetWindowTextLengthA" (ByVal hWnd As Long) As Long
-Private Declare Function GetParent Lib "User32.dll" (ByVal hWnd As Long) As Long
+Public Declare Function GetParent Lib "User32.dll" (ByVal hWnd As Long) As Long
 Private Declare Function GetWindowThreadProcessId Lib "user32" (ByVal hWnd As Long, lpdwprocessid As Long) As Long
 Private Declare Function EnumWindows Lib "user32" (ByVal lpEnumFunc As Long, ByVal lParam As Long) As Long
 Private Declare Function EnumChildWindows Lib "user32" (ByVal hWndParent As Long, ByVal lpEnumFunc As Long, ByVal lParam As Long) As Long
 Private Declare Function GetWindowRect Lib "user32" (ByVal hWnd As Long, lpRect As WindowRect) As Long
+Private Declare Function sendMessageI Lib "user32" Alias "SendMessageW" (ByVal hWnd As Long, ByVal wMsg As Long, ByVal wParam As Long, lParam As Any) As Long
+Private Declare Function SendMessageA Lib "user32" (ByVal hWnd As Long, ByVal wMsg As Long, ByVal wParam As Long, lParam As Any) As Long
 Public Declare Sub Sleep Lib "kernel32.dll" (ByVal dwMilliseconds As Long)
+
+Private Declare Function GetClassNameI Lib "user32" Alias "GetClassNameA" (ByVal hWnd As Long, _
+                                                                          ByVal lpClassName As String, _
+                                                                          ByVal nMaxCount As Long) _
+                                                                          As Long
+Declare Function GetDlgItem Lib "user32" (ByVal hDlg&, ByVal nIDDlgItem&) As Long
 
 Public Const WM_COPYDATA = &H4A
 Private Const gw_hwndnext = 2
@@ -17,6 +25,14 @@ Private Const FWP_STARTSWITH = 0
 Private Const FWP_CONTAINS = 1
 Private Const FWP_ENDSWITH = 2
 Private title As String
+
+Private Const WM_DESTROY As Long = &H2
+Private Const WM_CLOSE As Long = &H10
+Private Const WM_SYSCOMMAND = &H112
+Private Const WM_COMMAND = &H111
+Private Const WM_NCDESTROY = &H82
+Private Const SC_CLOSE = &HF060
+Private Const IDNO = 7
 
 Public Enum SearchMethod
     StartsWith = 0
@@ -60,6 +76,123 @@ Public Sub findChildWindowHandles(parent_handle As Long, ByRef child_windows As 
     Loop
 
 End Sub
+'See if a certain value is already in a collection
+Public Function containsValue(ByRef coll As Collection, ByVal val As Variant) As Boolean
+    Dim i As Integer
+    
+    For i = 1 To coll.Count
+        If coll(i) = val Then
+            containsValue = True
+            Exit Function
+        End If
+    Next
+    
+    'Default false value
+    containsValue = False
+End Function
+'Improved version of finding window handles: this will return a collection of all matching windows
+Public Function findAllWindows(ByVal title_part, Optional method As SearchMethod = TryAll) As Collection
+    Dim result As New Collection
+    Dim temp_results As Collection
+    Dim temp_handle As Long
+    Dim temp_length As Long
+    Dim str_index As Long
+    Dim end_index As Long
+    Dim temp_title As String
+    Dim temp_title_u As String
+    Dim i As Integer
+    Dim found As Boolean
+    
+    If method = TryAll Then
+        Set temp_results = findAllWindows(title_part, StartsWith)
+        
+        For i = 1 To temp_results.Count
+            temp_handle = temp_results(i)
+            If Not containsValue(result, temp_handle) Then
+                result.Add temp_handle
+            End If
+        Next
+        
+        Set temp_results = findAllWindows(title_part, Contains)
+        
+        For i = 1 To temp_results.Count
+            temp_handle = temp_results(i)
+            If Not containsValue(result, temp_handle) Then
+                result.Add temp_handle
+            End If
+        Next
+        
+        Set temp_results = findAllWindows(title_part, EndsWith)
+        
+        For i = 1 To temp_results.Count
+            temp_handle = temp_results(i)
+            If Not containsValue(result, temp_handle) Then
+                result.Add temp_handle
+            End If
+        Next
+                
+        Set findAllWindows = result
+    
+        Exit Function
+    End If
+    
+    'Uppercase the part to look for
+    title_part = UCase(title_part)
+    
+    'Get the starting handle
+    temp_handle = FindWindow(0&, 0&)
+    
+    Do Until temp_handle = 0
+        found = False
+    
+         'Prepare a string where the text will go in
+        temp_title = Space(256)
+        
+        'Get the title text (stored in titletmp)
+        temp_length = GetWindowText(temp_handle, temp_title, Len(temp_title))
+
+        If temp_length Then
+            'Remove the extra bits from the placeholder
+            temp_title = left(temp_title, temp_length)
+
+            'Uppercase the title
+            temp_title_u = UCase(temp_title)
+            
+            'Look for the uppercase titlepart in the uppercase title
+            str_index = InStr(temp_title_u, title_part)
+            
+            If method = SearchMethod.StartsWith Then
+                If str_index = 1 Then
+                    found = True
+                End If
+            End If
+            
+            If method = SearchMethod.Contains Then
+                If str_index > 0 Then
+                    found = True
+                End If
+            End If
+            
+            If method = SearchMethod.EndsWith Then
+                'Calculate the index where the needle should start in this haystack
+                end_index = (Len(temp_title_u) - Len(title_part)) + 1
+                
+                If str_index > 0 And str_index = end_index Then
+                    found = True
+                End If
+            End If
+            
+            If found Then
+                result.Add temp_handle
+            End If
+        End If
+        
+        'Get the next handle
+        temp_handle = GetWindow(temp_handle, gw_hwndnext)
+    Loop
+    
+    Set findAllWindows = result
+End Function
 'Find a window by the titlepart & search method
 Public Function findwindowpartial(ByVal titlepart$, method As SearchMethod, Optional parent_proc As Long = 0, Optional parent_handle As Long = -1) As Long
     Dim hwndtmp As Long
@@ -263,4 +396,30 @@ Public Sub GetWindowSize(ByVal hWnd As Long, Optional ByRef left As Long, Option
     bottom = rc.bottom
     width = rc.right - rc.left
     height = rc.bottom - rc.top
+End Sub
+'Get the class name of the window
+Public Function getClassName(ByVal handle As Long) As String
+    Dim class_name As String
+    Dim str_length As Long
+    
+    'Make temporary string
+    class_name = Space(256)
+    
+    'Get the classname and the length
+    str_length = GetClassNameI(handle, class_name, Len(class_name))
+    
+    'Trim the string
+    class_name = left(class_name, str_length)
+    
+    getClassName = class_name
+End Function
+'Send a close message to the window
+Public Sub sendCloseMessage(ByVal handle As Long)
+
+    If GetDlgItem(handle, IDNO) Then
+        Call SendMessageA(handle, WM_COMMAND, IDNO, ByVal 0&)
+    Else
+        Call SendMessageA(handle, WM_CLOSE, 0, ByVal 0&)
+    End If
+    
 End Sub

@@ -16,6 +16,9 @@ Public proc_id As Long
 Public thread_id As Long
 Public title As String
 
+'Search options
+Public search_for_dialog As Integer
+
 Private pLeft As Long
 Private pRight As Long
 Private pTop As Long
@@ -46,7 +49,11 @@ Private Type CopyData
 End Type
 'Initialize the class
 Private Sub Class_Initialize()
+    'Handle 0 means it is not found
     handle = 0
+    
+    '-1 means anything goes
+    search_for_dialog = -1
 End Sub
 'Is this process still running?
 Public Property Get is_running() As Boolean
@@ -56,6 +63,10 @@ Public Property Get is_running() As Boolean
         is_running = True
     End If
 End Property
+'Get the classname
+Public Property Get class_name() As String
+    class_name = windows.getClassName(handle)
+End Property
 'Load the process id
 Public Function loadProcId() As Long
     ' Process id will be stored in idProc, the thread id is returned to threadId
@@ -64,25 +75,41 @@ Public Function loadProcId() As Long
 End Function
 'Load a window by its title
 Public Sub loadByTitle(title As String, Optional method As SearchMethod = TryAll)
-    Dim try_result As Long
-
-    If method = TryAll Then
-        try_result = getWindowHandle(title, StartsWith)
-        
-        If Not try_result Then
-            try_result = getWindowHandle(title, EndsWith)
-        End If
-        
-        If Not try_result Then
-            try_result = getWindowHandle(title, Contains)
-        End If
-    Else
-        try_result = getWindowHandle(title, method)
-    End If
-
-    handle = try_result
+    Dim handles As Collection
+    Dim test_handle As Long
+    Dim test_class As String
+    Dim i As Integer
     
-    loadByHandle handle
+    'Look for all the handles that match this title
+    Set handles = windows.findAllWindows(title, method)
+    
+    'Iterate over all the found handles
+    For i = 1 To handles.Count
+        test_handle = handles(i)
+        test_class = windows.getClassName(test_handle)
+        
+        'Allow either
+        If search_for_dialog = -1 Then
+            handle = test_handle
+            Exit For
+        'Allow non-dialogs
+        ElseIf search_for_dialog = 0 Then
+            If test_class <> "#32770" Then
+                handle = test_handle
+                Exit For
+            End If
+        'Allow only dialogs
+        ElseIf search_for_dialog = 1 Then
+            If test_class = "#32770" Then
+                handle = test_handle
+                Exit For
+            End If
+        End If
+    Next
+
+    If handle <> 0 Then
+        loadByHandle handle
+    End If
 End Sub
 'Load by multiple titles
 Public Sub loadByTitles(title1 As String, Optional title2 As String, Optional title3 As String)
@@ -125,7 +152,7 @@ Public Sub removeDll(path As String)
     Injector.UnInject_Dll path, CStr(proc_id)
 End Sub
 'Send a message to this form
-Public Sub sendMessage(message As String)
+Public Sub SendMessage(message As String)
     Dim cds As CopyData
     Dim buf() As Byte
     ReDim buf(1 To LenB(message))
@@ -144,7 +171,7 @@ Public Sub sendJSON(payload)
     'Stringify the payload
     message = JSON.toString(payload)
     
-    sendMessage (message)
+    SendMessage (message)
 End Sub
 'Move this window
 Public Sub moveWindow(X As Long, Y As Long, width As Long, height As Long, Optional repaint As Long = 1)
@@ -167,19 +194,30 @@ Public Sub getAllChildWindows()
         Debug.Print " -- " & Child.title & " - " & Child.width
     Next Value
 End Sub
+'Get a window that has the current window as a parent handle
 Public Function getChildWindow(title As String) As Window
     Dim child_handle As Long
     Dim Child As New Window
+    Dim all_handles As Collection
+    Dim parent_handle As Long
+    Dim test_handle As Long
+    Dim i As Integer
+    
+    'Get all the handles matching the title
+    Set all_handles = windows.findAllWindows(title, TryAll)
 
-    'Look using this process id
-    child_handle = windows.findwindowpartial(title, TryAll, proc_id)
+    'Iterate through all the handles
+    For i = 1 To all_handles.Count
+        test_handle = all_handles(i)
+        parent_handle = windows.GetParent(test_handle)
 
-    If Not child_handle Then
-        Exit Function
-    End If
+        If parent_handle = handle Then
+            Child.loadByHandle test_handle
+            Exit For
+        End If
+    Next
 
-    Child.loadByHandle child_handle
-    getChildWindow = Child
+    Set getChildWindow = Child
 End Function
 Public Sub activate()
     'Set active window by the handle
@@ -331,4 +369,8 @@ Public Sub setCursor(X As Long, Y As Long)
     
     'Actually set the position
     Mouse.setPosition X, Y
+End Sub
+'Close the window
+Public Sub closeWindow()
+    windows.sendCloseMessage handle
 End Sub

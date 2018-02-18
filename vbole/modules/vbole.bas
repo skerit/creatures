@@ -41,6 +41,9 @@ On Error GoTo ERR_HANDLER
     Set C2Window = New Window
     Set C2Speed = New Window
     
+    'The C2Window should not be a dialog box
+    C2Window.search_for_dialog = 0
+    
     'Get the C2 window
     C2Window.loadByTitles ".sfc - Creatures 2", "- Creatures 2", "Creatures 2"
 
@@ -151,6 +154,14 @@ Function executeCommand(req As Object) As Dictionary
         Else
             response.Add "handle", ActiveWindow.handle
         End If
+    
+    ElseIf cmd_type = "close" Then
+        'Close the window
+        If ActiveWindow.handle = 0 Then
+            response.Add "error", "Window '" & req.Item("command") & "' not found"
+        Else
+            ActiveWindow.closeWindow
+        End If
 
     ElseIf cmd_type = "keys" Then
     
@@ -166,7 +177,7 @@ Function executeCommand(req As Object) As Dictionary
             response.Add "error", "No window is active"
         Else
             'Send a message to the current active window
-            ActiveWindow.sendMessage req.Item("command")
+            ActiveWindow.SendMessage req.Item("command")
         End If
 
     ElseIf cmd_type = "setspeed" Then
