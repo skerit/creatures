@@ -5,6 +5,8 @@
 * The JSON module in VBOle now looks for a `toJSON` function on class instances
 * VBOle can now get all the child elements of a window
 * VBOle will now look for error dialog boxes and inform the library
+* The `SFCOle` class will now emit `vbole_error` errors, for when certain dialogs pop up
+* The `CreaturesApplication` class will forward these errors as either `error_dialogbox` or `error_vbole`. A callback is provided with which you have to respond.
 
 ## 0.2.0 (2018-02-17)
 
