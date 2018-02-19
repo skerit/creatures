@@ -300,7 +300,7 @@ Function executeCommand(req As Object) As Dictionary
         do_error_check = False
     ElseIf cmd_type = "caos" Then
         'Send the command to C2
-        caos_succeeded = App.firecommand(1, req.Item("command"), str_result)
+        caos_succeeded = App.FireCommand(1, req.Item("command"), str_result)
         
         'Add the result to the respone
         response.Add "result", str_result
@@ -527,7 +527,7 @@ Function exportCreature(creature_id As String, filepath As String) As Boolean
     Dim command_response As String
 
     'Target the creature
-    App.firecommand 1, "inst,setv norn " & creature_id & ",endm", command_response
+    App.FireCommand 1, "inst,setv norn " & creature_id & ",endm", command_response
     
     'Send Alt-F to open the File menu
     C2Window.typeKeys "%F"

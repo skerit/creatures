@@ -17,6 +17,7 @@
 * [VB] Add `play` and `pause` command, which clicks on the corresponding button
 * The original vbole result object/array is now added to error objects
 * Added `CreaturesApplication` method `play`, `pause` and `doUnpaused`
+* Fix the `Egg` class
 
 ## 0.2.0 (2018-02-17)
 
