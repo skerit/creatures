@@ -19,6 +19,7 @@ Public title As String
 'Search options
 Public search_for_dialog As Integer
 
+Private p_parent_handle As Long
 Private pLeft As Long
 Private pRight As Long
 Private pTop As Long
@@ -52,6 +53,9 @@ Private Sub Class_Initialize()
     'Handle 0 means it is not found
     handle = 0
     
+    '-1 means its not set
+    p_parent_handle = -1
+    
     '-1 means anything goes
     search_for_dialog = -1
 End Sub
@@ -70,13 +74,23 @@ End Property
 Public Function toJSON() As Dictionary
     Dim result As New Dictionary
     
+    'Update the dimension info
+    updateCoordinates
+    
     result.Add "_type", "Window"
     result.Add "handle", Me.handle
+    result.Add "parent", parent_handle
     result.Add "title", Me.title
     result.Add "class", Me.class_name
     result.Add "class_readable", WindowClasses.getReadableName(Me.class_name)
-    result.Add "width", Me.width
-    result.Add "height", Me.height
+    
+    'Add the dimension info
+    result.Add "left", pLeft
+    result.Add "right", pRight
+    result.Add "top", pTop
+    result.Add "bottom", pBottom
+    result.Add "width", pWidth
+    result.Add "height", pHeight
     
     Set toJSON = result
 End Function
@@ -243,7 +257,7 @@ Public Function getChildWindow(title As String) As Window
     Dim child_handle As Long
     Dim Child As New Window
     Dim all_handles As Collection
-    Dim parent_handle As Long
+    Dim test_parent_handle As Long
     Dim test_handle As Long
     Dim i As Integer
     
@@ -253,10 +267,11 @@ Public Function getChildWindow(title As String) As Window
     'Iterate through all the handles
     For i = 1 To all_handles.Count
         test_handle = all_handles(i)
-        parent_handle = windows.GetParent(test_handle)
+        test_parent_handle = windows.GetParent(test_handle)
 
-        If parent_handle = handle Then
+        If test_parent_handle = handle Then
             Child.loadByHandle test_handle
+            Child.parent_handle = test_parent_handle
             Exit For
         End If
     Next
@@ -395,6 +410,18 @@ Public Property Let height(ByVal value As Long)
     updateCoordinates
     pHeight = value
     moveWindow pLeft, pTop, pWidth, pHeight
+End Property
+'Parent handle getter
+Public Property Get parent_handle() As Long
+    If p_parent_handle = -1 Then
+        p_parent_handle = windows.GetParent(handle)
+    End If
+    
+    parent_handle = p_parent_handle
+End Property
+'Parent handle setter (does not change ownership)
+Public Property Let parent_handle(ByVal value As Long)
+    p_parent_handle = value
 End Property
 'Set the cursor to a position inside this window
 Public Sub setCursor(X As Long, Y As Long)

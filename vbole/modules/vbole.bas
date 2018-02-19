@@ -8,6 +8,12 @@ Dim App As Object
 'C2 Window goes here
 Dim C2Window As Window
 
+'C2 main toolbar (containg play/pause) goes here
+Dim C2ToolbarStandard As Window
+
+'All C2 child elements
+Dim C2ChildElements As Collection
+
 'C2 Speedhack window
 Dim C2Speed As Window
 
@@ -88,11 +94,7 @@ Public Sub Main()
         Set args = New Dictionary
     End If
 
-    'The C2Window should not be a dialog box
-    C2Window.search_for_dialog = 0
-    
-    'Get the C2 window
-    C2Window.loadByTitles ".sfc - Creatures 2", "- Creatures 2", "Creatures 2"
+    Call checkC2Window
 
 ListenLoop:
     Do
@@ -109,23 +111,7 @@ ListenLoop:
             Set App = CreateObject("SFC2.OLE")
         End If
         
-        'If C2 is no longer running, start it again
-        If C2Window.is_running = False Then
-            WriteDebug "Restarting SFC2.OLE"
-
-            'Load C2 again
-            Set App = CreateObject("SFC2.OLE")
-            
-            'Sleep for 1 second
-            windows.Sleep 1000
-            
-            'Load the window again
-            Set C2Window = New Window
-            C2Window.loadByTitles ".sfc - Creatures 2", "- Creatures 2", "Creatures 2"
-            
-            'Unset the speedhack window
-            Set C2Speed = New Window
-        End If
+        Call checkC2Window
         
         'See if any error dialogs have popped up
         If error_dialog_check Then
@@ -151,6 +137,61 @@ WriteStdErr Err.Source & " caused an error of type " & Err.Number & " - " & Err.
 GoTo ListenLoop
     
 byebye:
+End Sub
+Sub checkC2Window()
+    Dim search_again As Boolean
+    Dim entry As Window
+    Dim i As Integer
+    
+    'Don't search by default
+    search_again = False
+    
+    If C2Window.handle = 0 Then
+        'Do initial search
+        search_again = True
+    ElseIf C2Window.is_running = False Then
+        'Search again
+        search_again = True
+        
+        WriteDebug "Restarting SFC2.OLE"
+        
+        'Load C2 again
+        Set App = CreateObject("SFC2.OLE")
+        
+        'Sleep for 1 second
+        windows.Sleep 1000
+    End If
+    
+    
+    'Look for the window again?
+    If search_again = True Then
+        
+        'Create a new window instance
+        Set C2Window = New Window
+        
+        'The C2Window should not be a dialog box
+        C2Window.search_for_dialog = 0
+        
+        'Load it by these titles
+        C2Window.loadByTitles ".sfc - Creatures 2", "- Creatures 2", "Creatures 2"
+        
+        'Unset the speedhack window
+        Set C2Speed = New Window
+        
+        'Look for all child elements
+        Set C2ChildElements = C2Window.getAllChildElements(True)
+        
+        For i = 1 To C2ChildElements.Count
+            Set entry = C2ChildElements(i)
+            
+            'The standard toolbar is 496 pixels wide
+            If entry.width = 496 And entry.class_name = "ToolbarWindow32" Then
+                Set C2ToolbarStandard = entry
+            End If
+        Next
+        
+    End If
+    
 End Sub
 'Timer test
 Sub TimerProc(ByVal hWnd As Long, ByVal nIDEvent As Long, ByVal uElapse As Long, ByVal lpTimerFunc As Long)
@@ -270,6 +311,27 @@ Function executeCommand(req As Object) As Dictionary
             response.Add "error", "C2Window not found!"
         Else
             response.Add "handle", C2Window.handle
+        End If
+    
+    ElseIf cmd_type = "c2window_elements" Then
+        response.Add "result", C2ChildElements
+    
+    ElseIf cmd_type = "pause" Then
+        
+        If C2ToolbarStandard.handle = 0 Then
+            response.Add "error", "Standard toolbar not found, can't pause"
+        Else
+            C2ToolbarStandard.setCursor 330, 20
+            Mouse.LeftClick
+        End If
+    
+    ElseIf cmd_type = "play" Then
+        
+        If C2ToolbarStandard.handle = 0 Then
+            response.Add "error", "Standard toolbar not found, can't play"
+        Else
+            C2ToolbarStandard.setCursor 300, 20
+            Mouse.LeftClick
         End If
 
     ElseIf cmd_type = "geterrordialog" Then

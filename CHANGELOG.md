@@ -13,6 +13,8 @@
 * Add `SFCOle#escapeKeys` to escape a `SendKeys` string
 * Copy `.exp` files to a temporary location before importing them, so they do not get removed
 * Add `Export` class to read in exp files (only gets the moniker for now)
+* [VB] Get all C2Window child elements, return them to the `c2window_elements` command
+* [VB] Add `play` and `pause` command, which clicks on the corresponding button
 
 ## 0.2.0 (2018-02-17)
 
