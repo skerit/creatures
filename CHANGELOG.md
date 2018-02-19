@@ -15,6 +15,8 @@
 * Add `Export` class to read in exp files (only gets the moniker for now)
 * [VB] Get all C2Window child elements, return them to the `c2window_elements` command
 * [VB] Add `play` and `pause` command, which clicks on the corresponding button
+* The original vbole result object/array is now added to error objects
+* Added `CreaturesApplication` method `play`, `pause` and `doUnpaused`
 
 ## 0.2.0 (2018-02-17)
 
