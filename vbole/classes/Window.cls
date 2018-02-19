@@ -35,6 +35,7 @@ Private Declare Function SetFocus Lib "user32" (ByVal hWnd As Long) As Long
 Private Declare Function showWindowI Lib "user32" Alias "ShowWindow" (ByVal lhWnd As Long, ByVal nCmdShow As Long) As Long
 Private Declare Sub CopyMemory Lib "kernel32" Alias "RtlMoveMemory" (lpvDest As Any, lpvSource As Any, ByVal cbCopy As Long)
 Private Declare Function SetForegroundWindow Lib "user32" (ByVal hWnd As Long) As Long
+Private Declare Function SetActiveWindow Lib "user32" (ByVal hWnd As Long) As Long
 Private Declare Function OpenProcess Lib "kernel32" (ByVal dwDesiredAccess As Long, ByVal bInheritHandle As Long, ByVal dwProcessId As Long) As Long
 Private Declare Function EnumProcessModules Lib "psapi" (ByVal hProcess As Long, lphModule As Long, ByVal cb As Long, lpcbNeeded As Long) As Long
 Private Declare Function GetModuleBaseName Lib "psapi" Alias "GetModuleBaseNameA" (ByVal hProcess As Long, ByVal hModule As Long, ByVal lpFileName As String, ByVal nSize As Long) As Long
@@ -279,6 +280,18 @@ Public Function getChildWindow(title As String) As Window
     Set getChildWindow = Child
 End Function
 Public Sub activate()
+
+    If GetForegroundWindow() = handle Then
+        'Activate the desktop window first.
+        'We do this because clicking inside an application can mess up keyboard interaction,
+        'and setting the foreground window afterwards won't work because it's already technically in the foreground
+        'So we move focus off the window and then back again
+        SetForegroundWindow GetDesktopWindow()
+        
+        'Sleep for 50ms
+        Sleep 50
+    End If
+
     'Set active window by the handle
     SetForegroundWindow handle
     

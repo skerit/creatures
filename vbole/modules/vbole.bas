@@ -287,6 +287,9 @@ Function executeCommand(req As Object) As Dictionary
 
     cmd_type = req.Item("type")
     
+    'Add the command to the response object, for debugging sake
+    response.Add "cmd_type", cmd_type
+    
     'Do the dialog error check by default
     do_error_check = True
     
@@ -321,7 +324,15 @@ Function executeCommand(req As Object) As Dictionary
         If C2ToolbarStandard.handle = 0 Then
             response.Add "error", "Standard toolbar not found, can't pause"
         Else
+            'Move cursor to the toolbar
             C2ToolbarStandard.setCursor 330, 20
+            
+            'Click the mouse
+            Mouse.LeftClick
+            
+            'The toolbar now has focus, we need to move focus again
+            'We do so by clicking the titlebar
+            C2Window.setCursor 50, 5
             Mouse.LeftClick
         End If
     
@@ -331,6 +342,11 @@ Function executeCommand(req As Object) As Dictionary
             response.Add "error", "Standard toolbar not found, can't play"
         Else
             C2ToolbarStandard.setCursor 300, 20
+            Mouse.LeftClick
+            
+            'The toolbar now has focus, we need to move focus again
+            'We do so by clicking the titlebar
+            C2Window.setCursor 50, 5
             Mouse.LeftClick
         End If
 
@@ -375,6 +391,11 @@ Function executeCommand(req As Object) As Dictionary
         Else
             'Send keystrokes to the current active window
             ActiveWindow.typeKeys req.Item("command")
+            
+            response.Add "sent", req.Item("command")
+            response.Add "to", ActiveWindow.handle
+
+            WriteDebug "Sent '" & req.Item("command") & "' keystrokes to window " & ActiveWindow.handle
         End If
 
     ElseIf cmd_type = "message" Then
@@ -432,6 +453,8 @@ Function executeCommand(req As Object) As Dictionary
     ElseIf cmd_type = "sleep" Then
         'Sleep for the given amount of ms
         Sleep req.Item("command")
+        
+        response.Add "slept", req.Item("command")
     
     End If
     

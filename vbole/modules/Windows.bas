@@ -12,6 +12,8 @@ Private Declare Function GetWindowRect Lib "user32" (ByVal hWnd As Long, lpRect 
 Private Declare Function sendMessageI Lib "user32" Alias "SendMessageW" (ByVal hWnd As Long, ByVal wMsg As Long, ByVal wParam As Long, lParam As Any) As Long
 Private Declare Function SendMessageA Lib "user32" (ByVal hWnd As Long, ByVal wMsg As Long, ByVal wParam As Long, lParam As Any) As Long
 Public Declare Sub Sleep Lib "kernel32.dll" (ByVal dwMilliseconds As Long)
+Public Declare Function GetDesktopWindow Lib "user32" () As Long
+Public Declare Function GetForegroundWindow Lib "user32" () As Long
 
 Public Declare Function findWindowEx Lib "user32.dll" Alias "FindWindowExA" (ByVal hwndParent As Long, Optional ByVal hwndChildAfter As Long, Optional ByVal lpszClass As String, Optional ByVal lpszWindow As String) As Long
 
@@ -370,13 +372,13 @@ Public Function activateWindow(title, Optional wait As Integer = 60) As Boolean
     
     On Error Resume Next
     
-    For Each Value In windows
-        If InStr(Value, title) Then
-            AppActivate Value
+    For Each value In windows
+        If InStr(value, title) Then
+            AppActivate value
             activateWindow = True
             Exit For
         End If
-    Next Value
+    Next value
 End Function
 ' Return an array of Long holding the handles of all the child windows
 ' of a given window. If hWnd = 0 it returns all the top-level windows.
