@@ -12,6 +12,7 @@
 * [VB] VBOle now accepts a startup argument as json
 * Add `SFCOle#escapeKeys` to escape a `SendKeys` string
 * Copy `.exp` files to a temporary location before importing them, so they do not get removed
+* Add `Export` class to read in exp files (only gets the moniker for now)
 
 ## 0.2.0 (2018-02-17)
 
