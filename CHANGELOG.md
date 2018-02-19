@@ -10,6 +10,7 @@
 * [VB] Add `WriteDebug` method & flush outputs
 * [VB] Another VBOle instance is created for monitoring error dialogs during CAOS commands
 * [VB] VBOle now accepts a startup argument as json
+* Add `SFCOle#escapeKeys` to escape a `SendKeys` string
 
 ## 0.2.0 (2018-02-17)
 
