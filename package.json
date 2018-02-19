@@ -9,6 +9,7 @@
 	"dependencies": {
 		"binary-extractor": "~0.1.0",
 		"graceful-fs": "~4.1.11",
-		"protoblast": "~0.5.0"
+		"protoblast": "~0.5.0",
+		"tmp": "~0.0.33"
 	}
 }
