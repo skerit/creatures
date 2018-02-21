@@ -93,6 +93,13 @@ Public Sub Main()
     Else
         Set args = New Dictionary
     End If
+    
+    'Detecting crash dialogs?
+    'C2Window.loadByTitles "SMALL FURRY CREATURES MFC Application"
+    'C2Window.closeWindow
+    
+    'Detecting save windows (main C2 window changes name)
+    'C2Window.loadByTitles "Saving..."
 
     Call checkC2Window
 
@@ -284,6 +291,8 @@ Function executeCommand(req As Object) As Dictionary
     Dim do_error_check As Boolean
     Dim ref_response As Dictionary
     Dim var_type As String
+    Dim temp_bool As Boolean
+    Dim temp_int As Integer
 
     cmd_type = req.Item("type")
     
@@ -300,7 +309,7 @@ Function executeCommand(req As Object) As Dictionary
         do_error_check = False
     ElseIf cmd_type = "caos" Then
         'Send the command to C2
-        caos_succeeded = App.FireCommand(1, req.Item("command"), str_result)
+        caos_succeeded = App.firecommand(1, req.Item("command"), str_result)
         
         'Add the result to the respone
         response.Add "result", str_result
@@ -321,33 +330,71 @@ Function executeCommand(req As Object) As Dictionary
     
     ElseIf cmd_type = "pause" Then
         
-        If C2ToolbarStandard.handle = 0 Then
-            response.Add "error", "Standard toolbar not found, can't pause"
+        'Get the current pause status
+        caos_succeeded = App.firecommand(1, "inst,dde: putv paus,endm", str_result)
+        
+        If caos_succeeded = False Then
+            response.Add "error", "Could not get game state"
         Else
-            'Move cursor to the toolbar
-            C2ToolbarStandard.setCursor 330, 20
+            temp_int = CInt(str_result)
             
-            'Click the mouse
-            Mouse.LeftClick
+            'Reverse the result (response is actually "is it paused?", but we want "is is playing?")
+            If temp_int = 1 Then
+                temp_int = 0
+            ElseIf temp_int = 0 Then
+                temp_int = 1
+            Else
+                temp_int = -1
+            End If
+        
+            'Add the current state to the response
+            response.Add "previous_state", temp_int
             
-            'The toolbar now has focus, we need to move focus again
-            'We do so by clicking the titlebar
-            C2Window.setCursor 50, 5
-            Mouse.LeftClick
+            'Actually resume the game first, because after an error/warning the game will continue
+            'while still being "paused"
+            'And send the command
+            caos_succeeded = App.firecommand(1, "inst,setv paus 0,endm", str_result)
+            
+            'And send the actual command
+            caos_succeeded = App.firecommand(1, "inst,setv paus 1,endm", str_result)
+            
+            If caos_succeeded = False Then
+                response.Add "error", "Failed to pause the game"
+            Else
+                response.Add "new_state", 0
+            End If
         End If
-    
+        
     ElseIf cmd_type = "play" Then
         
-        If C2ToolbarStandard.handle = 0 Then
-            response.Add "error", "Standard toolbar not found, can't play"
+        'Get the current pause status
+        caos_succeeded = App.firecommand(1, "inst,dde: putv paus,endm", str_result)
+        
+        If caos_succeeded = False Then
+            response.Add "error", "Could not get game state"
         Else
-            C2ToolbarStandard.setCursor 300, 20
-            Mouse.LeftClick
+            temp_int = CInt(str_result)
             
-            'The toolbar now has focus, we need to move focus again
-            'We do so by clicking the titlebar
-            C2Window.setCursor 50, 5
-            Mouse.LeftClick
+            'Reverse the result (response is actually "is it paused?", but we want "is is playing?")
+            If temp_int = 1 Then
+                temp_int = 0
+            ElseIf temp_int = 0 Then
+                temp_int = 1
+            Else
+                temp_int = -1
+            End If
+
+            'Add the current state to the response
+            response.Add "previous_state", temp_int
+            
+            'And send the command
+            caos_succeeded = App.firecommand(1, "inst,setv paus 0,endm", str_result)
+            
+            If caos_succeeded = False Then
+                response.Add "error", "Failed to resume the game"
+            Else
+                response.Add "new_state", 1
+            End If
         End If
 
     ElseIf cmd_type = "geterrordialog" Then
@@ -527,7 +574,7 @@ Function exportCreature(creature_id As String, filepath As String) As Boolean
     Dim command_response As String
 
     'Target the creature
-    App.FireCommand 1, "inst,setv norn " & creature_id & ",endm", command_response
+    App.firecommand 1, "inst,setv norn " & creature_id & ",endm", command_response
     
     'Send Alt-F to open the File menu
     C2Window.typeKeys "%F"
