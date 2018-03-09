@@ -18,6 +18,7 @@
 * Added `CreaturesApplication` method `play`, `pause`, `getIsPlaying` and `doUnpaused`
 * Fix the `Egg` class
 * Add `Chemistry` class and chemicals
+* Moved `Creature#getBodyPartImage` to `Genome` class
 
 ## 0.2.0 (2018-02-17)
 
