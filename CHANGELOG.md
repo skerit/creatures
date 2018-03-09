@@ -17,6 +17,7 @@
 * [VB] Add `play` and `pause` command, which sets the "paus" variable using CAOS
 * Added `CreaturesApplication` method `play`, `pause`, `getIsPlaying` and `doUnpaused`
 * Fix the `Egg` class
+* Add `Chemistry` class and chemicals
 
 ## 0.2.0 (2018-02-17)
 
