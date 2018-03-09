@@ -1,1 +1,1 @@
-module.exports = require('./lib/creatures_application.js');
+module.exports = require('./lib/init.js');
