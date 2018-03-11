@@ -19,6 +19,7 @@
 * Fix the `Egg` class
 * Add `Chemistry` class and chemicals
 * Moved `Creature#getBodyPartImage` to `Genome` class
+* Add `Creature#inseminate` method
 
 ## 0.2.0 (2018-02-17)
 
