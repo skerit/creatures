@@ -1,4 +1,4 @@
-## 0.2.1 (WIP)
+## 0.2.1 (2018-03-12)
 
 * VBOle will now always respond with a JSON object than can optionally contain an error
 * If a command should fail, other commands in the array will no longer be executed
