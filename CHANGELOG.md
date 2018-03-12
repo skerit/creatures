@@ -2,6 +2,7 @@
 
 * Emit `world_name` event when a new world is detected
 * Detect removed creatures and emit a `removed` event
+* Recreate vbole instance when a new world is opened
 
 ## 0.2.1 (2018-03-12)
 
