@@ -1,3 +1,8 @@
+## 0.2.2 (WIP)
+
+* Emit `world_name` event when a new world is detected
+* Detect removed creatures and emit a `removed` event
+
 ## 0.2.1 (2018-03-12)
 
 * VBOle will now always respond with a JSON object than can optionally contain an error
