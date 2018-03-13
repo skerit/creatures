@@ -4,6 +4,7 @@
 * Detect removed creatures and emit a `removed` event
 * Recreate vbole instance when a new world is opened
 * Add command timeout checks
+* Fix `Creature#getBodyPartImage` being deadlocked waiting for `ready` event
 
 ## 0.2.1 (2018-03-12)
 
