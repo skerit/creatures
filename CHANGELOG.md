@@ -6,6 +6,7 @@
 * Add command timeout checks
 * Fix `Creature#getBodyPartImage` being deadlocked waiting for `ready` event
 * Fix getting information for the `World.sfc` world, which stored data in other locations
+* If unable to get a gene file in the documents directories, get it from the main application directory
 
 ## 0.2.1 (2018-03-12)
 
