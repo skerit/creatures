@@ -5,6 +5,7 @@
 * Recreate vbole instance when a new world is opened
 * Add command timeout checks
 * Fix `Creature#getBodyPartImage` being deadlocked waiting for `ready` event
+* Fix getting information for the `World.sfc` world, which stored data in other locations
 
 ## 0.2.1 (2018-03-12)
 
