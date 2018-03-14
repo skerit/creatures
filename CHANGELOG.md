@@ -13,6 +13,7 @@
 * Add English, Dutch & French menu keys mappings
 * Make the Import & Export functions work in all languages (except Japanese)
 * Fix the sendKeys functionality on Windows 10 (needed to send {DOWN} to actually open a menu)
+* Add some more context info to VBOLE errors
 
 ## 0.2.1 (2018-03-12)
 
