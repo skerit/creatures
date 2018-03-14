@@ -9,6 +9,7 @@
 * If unable to get a gene file in the documents directories, get it from the main application directory
 * Fix `S16#load` from getting stuck in an infinite loop
 * Fix `Genome#getBodyPartImage` so that it tries all lower lifestages before giving up (especially needed for ettins)
+* Get locale & language of the current windows environment
 
 ## 0.2.1 (2018-03-12)
 
