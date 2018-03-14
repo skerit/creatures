@@ -11,6 +11,8 @@
 * Fix `Genome#getBodyPartImage` so that it tries all lower lifestages before giving up (especially needed for ettins)
 * Get locale & language of the current windows environment
 * Add English, Dutch & French menu keys mappings
+* Make the Import & Export functions work in all languages (except Japanese)
+* Fix the sendKeys functionality on Windows 10 (needed to send {DOWN} to actually open a menu)
 
 ## 0.2.1 (2018-03-12)
 
