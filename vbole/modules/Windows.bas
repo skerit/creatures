@@ -474,9 +474,6 @@ Public Function getAllChildElementsOfWindow(ByVal handle As Long, Optional recur
         Set child_window = New Window
         child_window.loadByHandle found_handle
         
-        Debug.Print " Child text: " & child_window.title
-        Debug.Print " -- Class:" & child_window.class_name
-        
         'Add it to the result
         result.Add child_window
         

@@ -15,6 +15,7 @@ Public handle As Long
 Public proc_id As Long
 Public thread_id As Long
 Public title As String
+Public expected_process_name As String
 
 'Search options
 Public search_for_dialog As Integer
@@ -106,7 +107,10 @@ Public Sub loadByTitle(title As String, Optional method As SearchMethod = TryAll
     Dim handles As Collection
     Dim test_handle As Long
     Dim test_class As String
+    Dim test_window As Window
     Dim i As Integer
+    
+    Set test_window = New Window
     
     'Look for all the handles that match this title
     Set handles = windows.findAllWindows(title, method)
@@ -115,6 +119,17 @@ Public Sub loadByTitle(title As String, Optional method As SearchMethod = TryAll
     For i = 1 To handles.Count
         test_handle = handles(i)
         test_class = windows.getClassName(test_handle)
+        
+        If Me.expected_process_name <> "" Then
+
+            'Load the test Window instance with this handle
+            test_window.loadByHandle test_handle
+            
+            'If the process name does not match what we expect, skip it
+            If test_window.getProcessName() <> Me.expected_process_name Then
+                GoTo Continue
+            End If
+        End If
         
         'Allow either
         If search_for_dialog = -1 Then
@@ -133,6 +148,8 @@ Public Sub loadByTitle(title As String, Optional method As SearchMethod = TryAll
                 Exit For
             End If
         End If
+
+Continue:
     Next
 
     If handle <> 0 Then
@@ -352,6 +369,20 @@ Public Function getProcessPath(Optional FullSpec As Boolean = True) As String
     getProcessPath = left$(sFileName, rtn)
 
     rtn = CloseHandle(hProcess)
+End Function
+'Get the name of the executable
+Public Function getProcessName() As String
+    Dim path As String
+    Dim process_name As String
+    
+    'Get the full path
+    path = Me.getProcessPath()
+
+    'The process name is the part after the last backslash
+    process_name = Mid$(path, InStrRev(path, "\", -1) + 1)
+    
+    'Set the process name as the return value
+    getProcessName = process_name
 End Function
 Public Sub updateCoordinates()
     GetWindowSize handle, pLeft, pRight, pTop, pBottom, pWidth, pHeight

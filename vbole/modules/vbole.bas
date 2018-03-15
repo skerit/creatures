@@ -176,12 +176,15 @@ Sub checkC2Window()
         'Create a new window instance
         Set C2Window = New Window
         
+        'The executable of the process should be "creatures2.exe"
+        C2Window.expected_process_name = "creatures2.exe"
+        
         'The C2Window should not be a dialog box
         C2Window.search_for_dialog = 0
         
         'Load it by these titles
         C2Window.loadByTitles ".sfc - Creatures 2", "- Creatures 2", "Creatures 2"
-        
+                
         'Unset the speedhack window
         Set C2Speed = New Window
         
