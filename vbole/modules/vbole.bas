@@ -506,6 +506,16 @@ Function executeCommand(req As Object) As Dictionary
         
         response.Add "slept", req.Item("command")
     
+    ElseIf cmd_type = "language" Then
+        'Get the language id
+        caos_succeeded = App.firecommand(1, "inst,dde: putv lang,endm", str_result)
+        
+        If caos_succeeded = False Then
+            response.Add "error", "Failed to get language"
+        Else
+            response.Add "language", str_result
+        End If
+    
     End If
     
     'Did a dialog box pop up during this command?
