@@ -18,6 +18,7 @@
 * Add `Creature#select(callback)` method to make it the active creature
 * If the creature's name starts with a "<", or it is the moniker or hex moniker, it is deemed "unnamed"
 * `CreaturesApplication#getProcessPath` will now callback with the path to the process as a string instead of a wrapped object
+* Callback with error if loading history files fails in `Creature#getWorldNames`
 
 ## 0.2.1 (2018-03-12)
 
