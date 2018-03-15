@@ -16,6 +16,7 @@
 * Add some more context info to VBOLE errors
 * [VB] Fix identifying other windows with "Creatures 2" as their title as the C2 window (for example explorer windows in a folder named "Creatures 2")
 * Add `Creature#select(callback)` method to make it the active creature
+* If the creature's name starts with a "<", or it is the moniker or hex moniker, it is deemed "unnamed"
 
 ## 0.2.1 (2018-03-12)
 
