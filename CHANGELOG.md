@@ -1,3 +1,7 @@
+## 0.2.3 (WIP)
+
+* Make sure `SfcOle` calls the `done` task after receiving error responses
+
 ## 0.2.2 (2018-03-15)
 
 * Emit `world_name` event when a new world is detected
