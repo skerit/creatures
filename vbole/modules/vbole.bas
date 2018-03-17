@@ -107,10 +107,10 @@ ListenLoop:
     Do
         'Get the string input
         in_string = ReadStdIn()
-        
+
         'Parse the JSON payload
         Set req = JSON.parse(in_string)
-        
+      
         'Create the OLE connection to C2
         '(will start C2 if it isn't running yet)
         If App Is Nothing Then
@@ -298,7 +298,7 @@ Function executeCommand(req As Object) As Dictionary
     Dim temp_int As Integer
 
     cmd_type = req.Item("type")
-    
+
     'Add the command to the response object, for debugging sake
     response.Add "cmd_type", cmd_type
     

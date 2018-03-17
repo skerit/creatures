@@ -1,6 +1,8 @@
 ## 0.2.3 (WIP)
 
 * Make sure `SfcOle` calls the `done` task after receiving error responses
+* Find the creatures2 executable in some common places if the game isn't running
+* Only run some commands 'till after the ready signal.
 
 ## 0.2.2 (2018-03-15)
 
