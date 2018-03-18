@@ -2,6 +2,7 @@
 
 * Add `CreaturesApplication#saveGame(callback)` which can save the game when using the `blueberry4$` cheat
 * Fix `Creature#techLanguage()` not working properly
+* Add methods to enable powerups
 
 ## 0.2.3 (2018-03-17)
 
