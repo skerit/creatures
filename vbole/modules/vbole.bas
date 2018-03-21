@@ -230,7 +230,6 @@ Public Function gotErrorDialog(Optional send_to_stderr As Boolean = True, Option
         If TypeName(ref_response) = "Nothing" Or IsMissing(ref_response) = True Then
             Set error_res = New Dictionary
         Else
-            WriteDebug "Using REFERENCE DICTIONARY for error dialog check"
             Set error_res = ref_response
         End If
 
