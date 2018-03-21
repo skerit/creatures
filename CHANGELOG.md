@@ -4,6 +4,7 @@
 * Fix `Creature#techLanguage()` not working properly
 * Add methods to enable powerups
 * When no creatures are in the world `getCreatureIds` will no longer callback with an array with 1 empty id string
+* Add `log` method to base class
 
 ## 0.2.3 (2018-03-17)
 
