@@ -7,6 +7,7 @@
 * Add `log` method to base class
 * Get X & Y position of creature on update
 * Update creature info before exporting
+* You can now supply a position when importing a creature
 
 ## 0.2.3 (2018-03-17)
 
