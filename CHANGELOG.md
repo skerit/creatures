@@ -1,7 +1,7 @@
 ## 0.2.4 (WIP)
 
 * Add `CreaturesApplication#saveGame(callback)` which can save the game when using the `blueberry4$` cheat
-* Fix `Creature#techLanguage()` not working properly
+* Fix `Creature#teachLanguage()` not working properly
 * Add methods to enable powerups
 * When no creatures are in the world `getCreatureIds` will no longer callback with an array with 1 empty id string
 * Add `log` method to base class
@@ -9,6 +9,7 @@
 * Update creature info before exporting
 * You can now supply a position when importing a creature
 * Add an initial error dialogbox check on init
+* Add `readFile` method that will retry reading a file on `EBUSY` errors
 
 ## 0.2.3 (2018-03-17)
 
