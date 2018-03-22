@@ -10,6 +10,7 @@
 * You can now supply a position when importing a creature
 * Add an initial error dialogbox check on init
 * Add `readFile` method that will retry reading a file on `EBUSY` errors
+* `Creature#update` can now timeout
 
 ## 0.2.3 (2018-03-17)
 
