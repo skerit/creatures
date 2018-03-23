@@ -20,6 +20,9 @@ Dim C2Speed As Window
 'C2 Error dialog box
 Dim C2Error As Window
 
+'C2 Crash dialog box
+Dim C2Crash As Window
+
 'Current active window goes here
 Dim ActiveWindow As Window
 
@@ -101,8 +104,6 @@ Public Sub Main()
     'Detecting save windows (main C2 window changes name)
     'C2Window.loadByTitles "Saving..."
 
-    Call checkC2Window
-
 ListenLoop:
     Do
         'Get the string input
@@ -110,19 +111,19 @@ ListenLoop:
 
         'Parse the JSON payload
         Set req = JSON.parse(in_string)
-      
-        'Create the OLE connection to C2
-        '(will start C2 if it isn't running yet)
-        If App Is Nothing Then
-            WriteDebug "Creating SFC2.OLE instance"
-            Set App = CreateObject("SFC2.OLE")
-        End If
-        
+
         Call checkC2Window
         
         'See if any error dialogs have popped up
         If error_dialog_check Then
             Call gotErrorDialog
+        End If
+        
+        'Create the OLE connection to C2
+        '(will start C2 if it isn't running yet)
+        If App Is Nothing Then
+            WriteDebug "Creating SFC2.OLE instance"
+            Set App = CreateObject("SFC2.OLE")
         End If
         
         'Is this 1 command or multiple?
@@ -220,12 +221,10 @@ Public Function gotErrorDialog(Optional send_to_stderr As Boolean = True, Option
     
     'Error window found!
     Do While C2Error.handle <> 0
-        WriteDebug "Current error handle is " & C2Error.handle
+        WriteDebug "Current error dialog handle number is " & C2Error.handle
 
         'Yup, there was an error!
         gotErrorDialog = True
-        
-        WriteDebug "Refresponse is " & TypeName(ref_response)
 
         If TypeName(ref_response) = "Nothing" Or IsMissing(ref_response) = True Then
             Set error_res = New Dictionary
@@ -239,8 +238,9 @@ Public Function gotErrorDialog(Optional send_to_stderr As Boolean = True, Option
         
         'Write to the error output
         If send_to_stderr = True Then
-            WriteDebug "Found Error Dialog, going to wait for response"
             WriteStdErr JSON.toString(error_res)
+
+            WriteDebug "Actually waiting for reply on what to do with error dialog"
         
             'Wait for the error reply!
             Set error_reply = JSON.parse(ReadStdIn())
@@ -251,9 +251,6 @@ Public Function gotErrorDialog(Optional send_to_stderr As Boolean = True, Option
                 Sleep 200
             End If
             
-            'Debug code...
-            'WriteStdErr JSON.toString(error_reply) & vbCrLf
-        
             'See if a new error window popped up
             Set C2Error = C2Window.getChildWindow("Creatures 2")
         Else
@@ -261,6 +258,57 @@ Public Function gotErrorDialog(Optional send_to_stderr As Boolean = True, Option
             Exit Do
         End If
     Loop
+    
+    'Look for crash dialogs
+    gotCrashDialog
+End Function
+'See if any crash windows pop up
+Public Function gotCrashDialog(Optional send_to_stderr As Boolean = True, Optional ByRef ref_response As Dictionary) As Boolean
+    Dim error_res As Dictionary
+    Dim error_reply As Dictionary
+    
+    'Default result value is false
+    gotCrashDialog = False
+    
+    'See if there is an error dialog open
+    Set C2Crash = New Window
+    C2Crash.loadByTitle "SMALL FURRY CREATURES MFC Application"
+    
+    'Error window found!
+    If C2Crash.handle <> 0 Then
+        WriteDebug "Current crash dialog handle nulber is " & C2Crash.handle
+
+        'Yup, there was an error!
+        gotCrashDialog = True
+
+        If TypeName(ref_response) = "Nothing" Or IsMissing(ref_response) = True Then
+            Set error_res = New Dictionary
+        Else
+            Set error_res = ref_response
+        End If
+
+        error_res.Add "error", "CrashDialog"
+        error_res.Add "handle", C2Crash.handle
+        error_res.Add "elements", C2Crash.getAllChildElements(True)
+        
+        'Write to the error output
+        If send_to_stderr = True Then
+            WriteDebug "Found Crash Dialog, going to wait for response"
+            WriteStdErr JSON.toString(error_res)
+
+            WriteDebug "Waiting for reply on what to do with crash dialog"
+        
+            'Wait for the error reply!
+            Set error_reply = JSON.parse(ReadStdIn())
+        
+            'For now we only listen for the "close" command
+            If error_reply.Item("type") = "close" Then
+                C2Crash.closeWindow
+                Sleep 200
+            End If
+            
+        End If
+    End If
 End Function
 'Execute multiple request after another
 Function executeCommands(commands As Collection) As String
