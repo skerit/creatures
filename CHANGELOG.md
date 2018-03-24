@@ -14,6 +14,7 @@
 * Get the room type a creature is in on update
 * Fix gene reading (except dendrites)
 * Gene flags are now also parsed
+* Implement pigment & pigment bleed
 
 ## 0.2.3 (2018-03-17)
 
