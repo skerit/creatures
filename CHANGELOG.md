@@ -11,6 +11,8 @@
 * Add an initial error dialogbox check on init
 * Add `readFile` method that will retry reading a file on `EBUSY` errors
 * `Creature#update` can now timeout
+* Get the room type a creature is in on update
+* Fix gene reading (except dendrites)
 
 ## 0.2.3 (2018-03-17)
 
