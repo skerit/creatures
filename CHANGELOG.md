@@ -15,6 +15,7 @@
 * Fix gene reading (except dendrites)
 * Gene flags are now also parsed
 * Implement pigment & pigment bleed
+* Add methods to get parents of an egg
 
 ## 0.2.3 (2018-03-17)
 
