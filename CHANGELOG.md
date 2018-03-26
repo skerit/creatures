@@ -1,4 +1,4 @@
-## 0.2.4 (WIP)
+## 0.2.4 (2018-03-26)
 
 * Add `CreaturesApplication#saveGame(callback)` which can save the game when using the `blueberry4$` cheat
 * Fix `Creature#teachLanguage()` not working properly
