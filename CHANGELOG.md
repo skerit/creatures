@@ -4,6 +4,7 @@
 * [VB] Fix bug where the main "Creatures 2" window was closed
 * [VB] No longer iterate through ALL open windows (which was the case when `handle` was 0)
 * See what the pause state is before resuming during `doUnpaused`
+* Find the correct age of an exported creature
 
 ## 0.2.4 (2018-03-26)
 
