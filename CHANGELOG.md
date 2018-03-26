@@ -3,6 +3,7 @@
 * [VB] Kill any creatures2.exe process without a window on boot
 * [VB] Fix bug where the main "Creatures 2" window was closed
 * [VB] No longer iterate through ALL open windows (which was the case when `handle` was 0)
+* See what the pause state is before resuming during `doUnpaused`
 
 ## 0.2.4 (2018-03-26)
 
