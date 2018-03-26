@@ -1,23 +1,68 @@
 Attribute VB_Name = "Windows"
 Public prog As String
 Private Declare Function FindWindow Lib "user32.dll" Alias "FindWindowA" (ByVal lpClassName As Any, ByVal lpWindowName As Any) As Long
-Private Declare Function GetWindow Lib "user32.dll" (ByVal hWnd As Long, ByVal wCmd As Long) As Long
-Public Declare Function GetWindowTextI Lib "user32.dll" Alias "GetWindowTextA" (ByVal hWnd As Long, ByVal lpString As String, ByVal nMaxCount As Long) As Long
-Private Declare Function GetWindowTextLength Lib "user32" Alias "GetWindowTextLengthA" (ByVal hWnd As Long) As Long
-Public Declare Function GetParent Lib "user32.dll" (ByVal hWnd As Long) As Long
-Private Declare Function GetWindowThreadProcessId Lib "user32" (ByVal hWnd As Long, lpdwprocessid As Long) As Long
+Private Declare Function GetWindow Lib "user32.dll" (ByVal hwnd As Long, ByVal wCmd As Long) As Long
+Public Declare Function GetWindowTextI Lib "user32.dll" Alias "GetWindowTextA" (ByVal hwnd As Long, ByVal lpString As String, ByVal nMaxCount As Long) As Long
+Private Declare Function GetWindowTextLength Lib "user32" Alias "GetWindowTextLengthA" (ByVal hwnd As Long) As Long
+Public Declare Function GetParent Lib "user32.dll" (ByVal hwnd As Long) As Long
+Private Declare Function GetWindowThreadProcessId Lib "user32" (ByVal hwnd As Long, lpdwProcessId As Long) As Long
 Private Declare Function EnumWindows Lib "user32" (ByVal lpEnumFunc As Long, ByVal lParam As Long) As Long
 Private Declare Function EnumChildWindows Lib "user32" (ByVal hwndParent As Long, ByVal lpEnumFunc As Long, ByVal lParam As Long) As Long
-Private Declare Function GetWindowRect Lib "user32" (ByVal hWnd As Long, lpRect As WindowRect) As Long
-Private Declare Function sendMessageI Lib "user32" Alias "SendMessageW" (ByVal hWnd As Long, ByVal wMsg As Long, ByVal wParam As Long, lParam As Any) As Long
-Private Declare Function SendMessageA Lib "user32" (ByVal hWnd As Long, ByVal wMsg As Long, ByVal wParam As Long, lParam As Any) As Long
+Private Declare Function GetWindowRect Lib "user32" (ByVal hwnd As Long, lpRect As WindowRect) As Long
+Private Declare Function sendMessageI Lib "user32" Alias "SendMessageW" (ByVal hwnd As Long, ByVal wMsg As Long, ByVal wParam As Long, lParam As Any) As Long
+Private Declare Function SendMessageA Lib "user32" (ByVal hwnd As Long, ByVal wMsg As Long, ByVal wParam As Long, lParam As Any) As Long
 Public Declare Sub Sleep Lib "kernel32.dll" (ByVal dwMilliseconds As Long)
 Public Declare Function GetDesktopWindow Lib "user32" () As Long
 Public Declare Function GetForegroundWindow Lib "user32" () As Long
 
+Private Const MAX_PATH As Long = 260
+
+Private Type PROCESSENTRY32
+    dwSize As Long
+    cntUsage As Long
+    th32ProcessID As Long
+    th32DefaultHeapID As Long
+    th32ModuleID As Long
+    cntThreads As Long
+    th32ParentProcessID As Long
+    pcPriClassBase As Long
+    dwFlags As Long
+    szExeFile As String * MAX_PATH
+End Type
+Private Declare Function CreateToolhelpSnapshot Lib "kernel32" Alias "CreateToolhelp32Snapshot" (ByVal lFlags As Long, ByVal lProcessID As Long) As Long
+Private Const TH32CS_SNAPPROCESS As Long = 2&
+
+Private Type LUID
+   lowpart As Long
+   highpart As Long
+End Type
+
+Private Type TOKEN_PRIVILEGES
+    PrivilegeCount As Long
+    LuidUDT As LUID
+    Attributes As Long
+End Type
+
+Const TOKEN_ADJUST_PRIVILEGES = &H20
+Const TOKEN_QUERY = &H8
+Const SE_PRIVILEGE_ENABLED = &H2
+Const PROCESS_ALL_ACCESS = &H1F0FFF
+
+Private Declare Function GetVersion Lib "kernel32" () As Long
+
+Private Declare Function ProcessFirst Lib "kernel32" Alias "Process32First" (ByVal hSnapShot As Long, uProcess As PROCESSENTRY32) As Long
+Private Declare Function ProcessNext Lib "kernel32" Alias "Process32Next" (ByVal hSnapShot As Long, uProcess As PROCESSENTRY32) As Long
+Private Declare Function CloseHandle Lib "kernel32" (ByVal hObject As Long) As Long
+Private Declare Function TerminateProcess Lib "kernel32" (ByVal hProcess As Long, ByVal uExitCode As Long) As Long
+Private Declare Function OpenProcessToken Lib "advapi32" (ByVal ProcessHandle As Long, ByVal DesiredAccess As Long, TokenHandle As Long) As Long
+Private Declare Function OpenProcess Lib "kernel32" (ByVal dwDesiredAccess As Long, ByVal bInheritHandle As Long, ByVal dwProcessId As Long) As Long
+Private Declare Function LookupPrivilegeValue Lib "advapi32" Alias "LookupPrivilegeValueA" (ByVal lpSystemName As String, ByVal lpName As String, lpLuid As LUID) As Long
+Private Declare Function AdjustTokenPrivileges Lib "advapi32" (ByVal TokenHandle As Long, ByVal DisableAllPrivileges As Long, NewState As TOKEN_PRIVILEGES, ByVal BufferLength As Long, PreviousState As Any, ReturnLength As Any) As Long
+Private Declare Function GetCurrentProcess Lib "kernel32" () As Long
+
 Public Declare Function findWindowEx Lib "user32.dll" Alias "FindWindowExA" (ByVal hwndParent As Long, Optional ByVal hwndChildAfter As Long, Optional ByVal lpszClass As String, Optional ByVal lpszWindow As String) As Long
 
-Private Declare Function GetClassNameI Lib "user32" Alias "GetClassNameA" (ByVal hWnd As Long, _
+Private Declare Function GetClassNameI Lib "user32" Alias "GetClassNameA" (ByVal hwnd As Long, _
                                                                           ByVal lpClassName As String, _
                                                                           ByVal nMaxCount As Long) _
                                                                           As Long
@@ -382,10 +427,10 @@ Public Function activateWindow(title, Optional wait As Integer = 60) As Boolean
 End Function
 ' Return an array of Long holding the handles of all the child windows
 ' of a given window. If hWnd = 0 it returns all the top-level windows.
-Function ChildWindows(ByVal hWnd As Long) As Long()
+Function ChildWindows(ByVal hwnd As Long) As Long()
     windowsCount = 0
-    If hWnd Then
-        EnumChildWindows hWnd, AddressOf EnumWindows_CBK, 1
+    If hwnd Then
+        EnumChildWindows hwnd, AddressOf EnumWindows_CBK, 1
     Else
         EnumWindows AddressOf EnumWindows_CBK, 1
     End If
@@ -394,7 +439,7 @@ Function ChildWindows(ByVal hWnd As Long) As Long()
     ChildWindows = windowlist()
 End Function
 ' The callback routine, common to both EnumWindows and EnumChildWindows.
-Private Function EnumWindows_CBK(ByVal hWnd As Long, ByVal lParam As Long) As _
+Private Function EnumWindows_CBK(ByVal hwnd As Long, ByVal lParam As Long) As _
     Long
     ' Make room in the array, if necessary.
     If windowsCount = 0 Then
@@ -405,15 +450,15 @@ Private Function EnumWindows_CBK(ByVal hWnd As Long, ByVal lParam As Long) As _
     
     ' Store the new item.
     windowsCount = windowsCount + 1
-    windowlist(windowsCount) = hWnd
+    windowlist(windowsCount) = hwnd
     ' Return 1 to continue enumeration.
     EnumWindows_CBK = 1
 End Function
 'Get a window's size in pixel
-Public Sub GetWindowSize(ByVal hWnd As Long, Optional ByRef left As Long, Optional ByRef right As Long, Optional ByRef top As Long, Optional ByRef bottom As Long, Optional ByRef width As Long, Optional ByRef height As Long)
+Public Sub GetWindowSize(ByVal hwnd As Long, Optional ByRef left As Long, Optional ByRef right As Long, Optional ByRef top As Long, Optional ByRef bottom As Long, Optional ByRef width As Long, Optional ByRef height As Long)
     Dim rc As WindowRect
 
-    GetWindowRect hWnd, rc
+    GetWindowRect hwnd, rc
     
     left = rc.left
     right = rc.right
@@ -489,4 +534,111 @@ Public Function getAllChildElementsOfWindow(ByVal handle As Long, Optional recur
     Loop Until found_handle = 0
     
     Set getAllChildElementsOfWindow = result
+End Function
+Public Function FindProcessID(ByVal pExename As String) As Long
+
+    Dim ProcessID As Long, hSnapShot As Long
+    Dim uProcess As PROCESSENTRY32, rProcessFound As Long
+    Dim Pos As Integer, szExename As String
+    
+    ' Create snapshot of current processes
+    hSnapShot = CreateToolhelpSnapshot(TH32CS_SNAPPROCESS, 0&)
+    ' Check if snapshot is valid
+    If hSnapShot = -1 Then
+        Exit Function
+    End If
+    'Initialize uProcess with correct size
+    uProcess.dwSize = Len(uProcess)
+    'Start looping through processes
+    rProcessFound = ProcessFirst(hSnapShot, uProcess)
+    Do While rProcessFound
+        Pos = InStr(1, uProcess.szExeFile, vbNullChar)
+        If Pos Then
+            szExename = left$(uProcess.szExeFile, Pos - 1)
+        End If
+        If LCase$(szExename) = LCase$(pExename) Then
+            'Found it
+            ProcessID = uProcess.th32ProcessID
+            Exit Do
+          Else
+            'Wrong, so continue looping
+            rProcessFound = ProcessNext(hSnapShot, uProcess)
+        End If
+    Loop
+    CloseHandle hSnapShot
+    FindProcessID = ProcessID
+End Function
+' Terminate any application and return an exit code to Windows
+' This works under NT/2000, even when the calling process
+' doesn't have the privilege to terminate the application
+' (for example, this may happen when the process was launched
+'  by yet another program)
+'
+' Usage:  Dim pID As Long
+'         pID = Shell("Notepad.Exe", vbNormalFocus)
+'         '...
+'         If KillProcess(pID, 0) Then
+'             MsgBox "Notepad was terminated"
+'         End If
+Function killProcess(ByVal hProcessID As Long, Optional ByVal ExitCode As Long) _
+    As Boolean
+    Dim hToken As Long
+    Dim hProcess As Long
+    Dim tp As TOKEN_PRIVILEGES
+    
+    ' Windows NT/2000 require a special treatment
+    ' to ensure that the calling process has the
+    ' privileges to shut down the system
+    
+    ' under NT the high-order bit (that is, the sign bit)
+    ' of the value retured by GetVersion is cleared
+    If GetVersion() >= 0 Then
+        ' open the tokens for the current process
+        ' exit if any error
+        If OpenProcessToken(GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES Or _
+            TOKEN_QUERY, hToken) = 0 Then
+            GoTo CleanUp
+        End If
+        
+        ' retrieves the locally unique identifier (LUID) used
+        ' to locally represent the specified privilege name
+        ' (first argument = "" means the local system)
+        ' Exit if any error
+        If LookupPrivilegeValue("", "SeDebugPrivilege", tp.LuidUDT) = 0 Then
+            GoTo CleanUp
+        End If
+    
+        ' complete the TOKEN_PRIVILEGES structure with the # of
+        ' privileges and the desired attribute
+        tp.PrivilegeCount = 1
+        tp.Attributes = SE_PRIVILEGE_ENABLED
+    
+        ' try to acquire debug privilege for this process
+        ' exit if error
+        If AdjustTokenPrivileges(hToken, False, tp, 0, ByVal 0&, _
+            ByVal 0&) = 0 Then
+            GoTo CleanUp
+        End If
+    End If
+    
+    ' now we can finally open the other process
+    ' while having complete access on its attributes
+    ' exit if any error
+    hProcess = OpenProcess(PROCESS_ALL_ACCESS, 0, hProcessID)
+    If hProcess Then
+        ' call was successful, so we can kill the application
+        ' set return value for this function
+        killProcess = (TerminateProcess(hProcess, ExitCode) <> 0)
+        ' close the process handle
+        CloseHandle hProcess
+    End If
+    
+    If GetVersion() >= 0 Then
+        ' under NT restore original privileges
+        tp.Attributes = 0
+        AdjustTokenPrivileges hToken, False, tp, 0, ByVal 0&, ByVal 0&
+        
+CleanUp:
+        If hToken Then CloseHandle hToken
+    End If
 End Function

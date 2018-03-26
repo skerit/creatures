@@ -3,7 +3,7 @@ Option Explicit
 Dim ddeb As Boolean
 
 'C2 OLE App goes here
-Dim App As Object
+Dim CApp As Object
 
 'C2 Window goes here
 Dim C2Window As Window
@@ -43,8 +43,8 @@ Private Declare Function GetStdHandle Lib "kernel32" (ByVal nStdHandle As Long) 
 Private Declare Function ReadFile Lib "kernel32" (ByVal hFile As Long, lpBuffer As Any, ByVal nNumberOfBytesToRead As Long, lpNumberOfBytesRead As Long, lpOverlapped As Any) As Long
 Private Declare Function WriteFile Lib "kernel32" (ByVal hFile As Long, lpBuffer As Any, ByVal nNumberOfBytesToWrite As Long, lpNumberOfBytesWritten As Long, lpOverlapped As Any) As Long
 Private Declare Function FlushFileBuffers Lib "kernel32" (ByVal hFile As Long) As Long
-Public Declare Function SetTimer Lib "user32" (ByVal hWnd As Long, ByVal nIDEvent As Long, ByVal uElapse As Long, ByVal lpTimerFunc As Long) As Long
-Public Declare Function KillTimer Lib "user32" (ByVal hWnd As Long, ByVal nIDEvent As Long) As Long
+Public Declare Function SetTimer Lib "user32" (ByVal hwnd As Long, ByVal nIDEvent As Long, ByVal uElapse As Long, ByVal lpTimerFunc As Long) As Long
+Public Declare Function KillTimer Lib "user32" (ByVal hwnd As Long, ByVal nIDEvent As Long) As Long
 
 'Constants
 Private Const STD_ERROR_HANDLE As Long = -12&
@@ -97,12 +97,31 @@ Public Sub Main()
         Set args = New Dictionary
     End If
     
-    'Detecting crash dialogs?
-    'C2Window.loadByTitles "SMALL FURRY CREATURES MFC Application"
-    'C2Window.closeWindow
+    'Delay the error checker instance for 1 second
+    If error_dialog_check = False Then
+        Sleep 1000
+    End If
     
-    'Detecting save windows (main C2 window changes name)
-    'C2Window.loadByTitles "Saving..."
+    'Detecting crash dialogs?
+    If InIDE() Then
+        Debug.Print "Running in IDE!"
+        
+        Call checkC2Window
+        Debug.Print "Got C2 Window handle: " & C2Window.handle
+        
+        If CApp Is Nothing Then
+            Set CApp = CreateObject("SFC2.OLE")
+        End If
+        
+        Call gotErrorDialog
+        Debug.Print "Checked for error dialog"
+        'C2Window.loadByTitles "SMALL FURRY CREATURES MFC Application"
+        'C2Window.closeWindow
+                
+        'Detecting save windows (main C2 window changes name)
+        'C2Window.loadByTitles "Saving..."
+        Exit Sub
+    End If
 
 ListenLoop:
     Do
@@ -121,9 +140,9 @@ ListenLoop:
         
         'Create the OLE connection to C2
         '(will start C2 if it isn't running yet)
-        If App Is Nothing Then
+        If CApp Is Nothing Then
             WriteDebug "Creating SFC2.OLE instance"
-            Set App = CreateObject("SFC2.OLE")
+            Set CApp = CreateObject("SFC2.OLE")
         End If
         
         'Is this 1 command or multiple?
@@ -146,9 +165,10 @@ GoTo ListenLoop
     
 byebye:
 End Sub
-Sub checkC2Window()
+Sub checkC2Window(Optional attempt As Integer = 0)
     Dim search_again As Boolean
     Dim entry As Window
+    Dim pid As Long
     Dim i As Integer
     
     'Don't search by default
@@ -164,7 +184,7 @@ Sub checkC2Window()
         WriteDebug "Restarting SFC2.OLE"
         
         'Load C2 again
-        Set App = CreateObject("SFC2.OLE")
+        Set CApp = CreateObject("SFC2.OLE")
         
         'Sleep for 1 second
         windows.Sleep 1000
@@ -192,20 +212,34 @@ Sub checkC2Window()
         'Look for all child elements
         Set C2ChildElements = C2Window.getAllChildElements(True)
         
-        For i = 1 To C2ChildElements.Count
-            Set entry = C2ChildElements(i)
+        If C2Window.handle = 0 And attempt = 0 Then
+            WriteDebug "Still no C2 window found, looking for pid"
+            pid = windows.FindProcessID("creatures2.exe")
             
-            'The standard toolbar is 496 pixels wide
-            If entry.width = 496 And entry.class_name = "ToolbarWindow32" Then
-                Set C2ToolbarStandard = entry
+            If pid <> 0 Then
+                WriteDebug "Found creatures2.exe pid without window: " & pid
+                Call windows.killProcess(pid)
             End If
-        Next
+            
+            'Try getting the window again
+            Call checkC2Window(1)
+        End If
         
+        If C2Window.handle <> 0 Then
+            For i = 1 To C2ChildElements.Count
+                Set entry = C2ChildElements(i)
+                
+                'The standard toolbar is 496 pixels wide
+                If entry.width = 496 And entry.class_name = "ToolbarWindow32" Then
+                    Set C2ToolbarStandard = entry
+                End If
+            Next
+        End If
     End If
     
 End Sub
 'Timer test
-Sub TimerProc(ByVal hWnd As Long, ByVal nIDEvent As Long, ByVal uElapse As Long, ByVal lpTimerFunc As Long)
+Sub TimerProc(ByVal hwnd As Long, ByVal nIDEvent As Long, ByVal uElapse As Long, ByVal lpTimerFunc As Long)
     Debug.Print "TIMER!!"
 End Sub
 'See if any dialog boxes pop up and handle them!
@@ -216,12 +250,25 @@ Public Function gotErrorDialog(Optional send_to_stderr As Boolean = True, Option
     'Default result value is false
     gotErrorDialog = False
     
+    If C2Window.handle = 0 Then
+        Call checkC2Window
+    End If
+    
+    If C2Window.handle = 0 Then
+        WriteDebug "Could not find C2 window, not performing error dialog check"
+        Exit Function
+    End If
+    
     'See if there is an error dialog open
     Set C2Error = C2Window.getChildWindow("Creatures 2")
     
     'Error window found!
     Do While C2Error.handle <> 0
-        WriteDebug "Current error dialog handle number is " & C2Error.handle
+        WriteDebug "Current error dialog handle number is " & C2Error.handle & " - C2 window's handle is " & C2Window.handle
+        
+        If C2Window.handle = C2Error.handle Then
+            WriteDebug "Error dialog is actually the main creatures2 window, stupid!"
+        End If
 
         'Yup, there was an error!
         gotErrorDialog = True
@@ -359,7 +406,7 @@ Function executeCommand(req As Object) As Dictionary
         do_error_check = False
     ElseIf cmd_type = "caos" Then
         'Send the command to C2
-        caos_succeeded = App.firecommand(1, req.Item("command"), str_result)
+        caos_succeeded = CApp.firecommand(1, req.Item("command"), str_result)
         
         'Add the result to the respone
         response.Add "result", str_result
@@ -381,7 +428,7 @@ Function executeCommand(req As Object) As Dictionary
     ElseIf cmd_type = "pause" Then
         
         'Get the current pause status
-        caos_succeeded = App.firecommand(1, "inst,dde: putv paus,endm", str_result)
+        caos_succeeded = CApp.firecommand(1, "inst,dde: putv paus,endm", str_result)
         
         If caos_succeeded = False Then
             response.Add "error", "Could not get game state"
@@ -403,10 +450,10 @@ Function executeCommand(req As Object) As Dictionary
             'Actually resume the game first, because after an error/warning the game will continue
             'while still being "paused"
             'And send the command
-            caos_succeeded = App.firecommand(1, "inst,setv paus 0,endm", str_result)
+            caos_succeeded = CApp.firecommand(1, "inst,setv paus 0,endm", str_result)
             
             'And send the actual command
-            caos_succeeded = App.firecommand(1, "inst,setv paus 1,endm", str_result)
+            caos_succeeded = CApp.firecommand(1, "inst,setv paus 1,endm", str_result)
             
             If caos_succeeded = False Then
                 response.Add "error", "Failed to pause the game"
@@ -418,7 +465,7 @@ Function executeCommand(req As Object) As Dictionary
     ElseIf cmd_type = "play" Then
         
         'Get the current pause status
-        caos_succeeded = App.firecommand(1, "inst,dde: putv paus,endm", str_result)
+        caos_succeeded = CApp.firecommand(1, "inst,dde: putv paus,endm", str_result)
         
         If caos_succeeded = False Then
             response.Add "error", "Could not get game state"
@@ -438,7 +485,7 @@ Function executeCommand(req As Object) As Dictionary
             response.Add "previous_state", temp_int
             
             'And send the command
-            caos_succeeded = App.firecommand(1, "inst,setv paus 0,endm", str_result)
+            caos_succeeded = CApp.firecommand(1, "inst,setv paus 0,endm", str_result)
             
             If caos_succeeded = False Then
                 response.Add "error", "Failed to resume the game"
@@ -555,7 +602,7 @@ Function executeCommand(req As Object) As Dictionary
     
     ElseIf cmd_type = "language" Then
         'Get the language id
-        caos_succeeded = App.firecommand(1, "inst,dde: putv lang,endm", str_result)
+        caos_succeeded = CApp.firecommand(1, "inst,dde: putv lang,endm", str_result)
         
         If caos_succeeded = False Then
             response.Add "error", "Failed to get language"
@@ -634,7 +681,7 @@ Function exportCreature(creature_id As String, filepath As String) As Boolean
     Dim command_response As String
 
     'Target the creature
-    App.firecommand 1, "inst,setv norn " & creature_id & ",endm", command_response
+    CApp.firecommand 1, "inst,setv norn " & creature_id & ",endm", command_response
     
     'Send Alt-F to open the File menu
     C2Window.typeKeys "%F"
@@ -724,3 +771,7 @@ Sub WriteDebug(ByVal Text As String)
 fallback:
     Debug.Print Text
 End Sub
+Function InIDE() As Boolean
+    Debug.Print App.LogMode
+    InIDE = CBool(App.LogMode = 0)
+End Function

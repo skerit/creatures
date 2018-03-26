@@ -28,15 +28,15 @@ Private pBottom As Long
 Private pWidth As Long
 Private pHeight As Long
 
-Private Declare Function GetWindowThreadProcessId Lib "user32" (ByVal hWnd As Long, lpdwprocessid As Long) As Long
-Private Declare Function sendMessageI Lib "user32" Alias "SendMessageW" (ByVal hWnd As Long, ByVal wMsg As Long, ByVal wParam As Long, lParam As Any) As Long
-Private Declare Function moveWindowI Lib "user32" Alias "MoveWindow" (ByVal hWnd As Long, ByVal X As Long, ByVal Y As Long, ByVal nWidth As Long, ByVal nHeight As Long, ByVal bRepaint As Long) As Long
-Private Declare Function BringWindowToTop Lib "user32" (ByVal hWnd As Long) As Long
-Private Declare Function SetFocus Lib "user32" (ByVal hWnd As Long) As Long
+Private Declare Function GetWindowThreadProcessId Lib "user32" (ByVal hwnd As Long, lpdwProcessId As Long) As Long
+Private Declare Function sendMessageI Lib "user32" Alias "SendMessageW" (ByVal hwnd As Long, ByVal wMsg As Long, ByVal wParam As Long, lParam As Any) As Long
+Private Declare Function moveWindowI Lib "user32" Alias "MoveWindow" (ByVal hwnd As Long, ByVal X As Long, ByVal Y As Long, ByVal nWidth As Long, ByVal nHeight As Long, ByVal bRepaint As Long) As Long
+Private Declare Function BringWindowToTop Lib "user32" (ByVal hwnd As Long) As Long
+Private Declare Function SetFocus Lib "user32" (ByVal hwnd As Long) As Long
 Private Declare Function showWindowI Lib "user32" Alias "ShowWindow" (ByVal lhWnd As Long, ByVal nCmdShow As Long) As Long
 Private Declare Sub CopyMemory Lib "kernel32" Alias "RtlMoveMemory" (lpvDest As Any, lpvSource As Any, ByVal cbCopy As Long)
-Private Declare Function SetForegroundWindow Lib "user32" (ByVal hWnd As Long) As Long
-Private Declare Function SetActiveWindow Lib "user32" (ByVal hWnd As Long) As Long
+Private Declare Function SetForegroundWindow Lib "user32" (ByVal hwnd As Long) As Long
+Private Declare Function SetActiveWindow Lib "user32" (ByVal hwnd As Long) As Long
 Private Declare Function OpenProcess Lib "kernel32" (ByVal dwDesiredAccess As Long, ByVal bInheritHandle As Long, ByVal dwProcessId As Long) As Long
 Private Declare Function EnumProcessModules Lib "psapi" (ByVal hProcess As Long, lphModule As Long, ByVal cb As Long, lpcbNeeded As Long) As Long
 Private Declare Function GetModuleBaseName Lib "psapi" Alias "GetModuleBaseNameA" (ByVal hProcess As Long, ByVal hModule As Long, ByVal lpFileName As String, ByVal nSize As Long) As Long
@@ -227,6 +227,14 @@ Public Sub showWindow()
 End Sub
 'Get all child elements on this window
 Public Function getAllChildElements(Optional ByVal recursive As Boolean = True) As Collection
+
+    'If no handle is found, do nothing (or we'll search through ALL windows)
+    If Me.handle = 0 Then
+        Dim empty_result As New Collection
+        Set getAllChildElements = empty_result
+        Exit Function
+    End If
+
     Set getAllChildElements = windows.getAllChildElementsOfWindow(handle, recursive)
 End Function
 'Get all the child windows of this one
@@ -234,6 +242,12 @@ Public Sub getAllChildWindows()
     Dim result As New Collection
     Dim value As Variant
     Dim Child As Window
+    
+    'If no handle is found, do nothing (or we'll search through ALL windows)
+    If Me.handle = 0 Then
+        Set getAllChildWindows = result
+        Exit Function
+    End If
     
     windows.findChildWindowHandles handle, result
     
@@ -278,6 +292,12 @@ Public Function getChildWindow(title As String) As Window
     Dim test_parent_handle As Long
     Dim test_handle As Long
     Dim i As Integer
+    
+    'If no handle is found, do nothing (or we'll search through ALL windows)
+    If Me.handle = 0 Then
+        Set getChildWindow = Child
+        Exit Function
+    End If
     
     'Get all the handles matching the title
     Set all_handles = windows.findAllWindows(title, TryAll)
