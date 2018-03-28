@@ -1,3 +1,7 @@
+## 0.2.6 (WIP)
+
+* Fix getting parents of an egg
+
 ## 0.2.5 (2018-03-26)
 
 * [VB] Kill any creatures2.exe process without a window on boot
