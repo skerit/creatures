@@ -15,7 +15,8 @@ Public handle As Long
 Public proc_id As Long
 Public thread_id As Long
 Public title As String
-Public expected_process_name As String
+Private p_expected_process_name As String
+Public expected_short_name As String
 
 'Search options
 Public search_for_dialog As Integer
@@ -73,6 +74,15 @@ End Property
 Public Property Get class_name() As String
     class_name = windows.getClassName(handle)
 End Property
+'Expected process name getter
+Public Property Get expected_process_name() As String
+   expected_process_name = p_expected_process_name
+End Property
+
+Public Property Let expected_process_name(ByVal name As String)
+   p_expected_process_name = name
+   expected_short_name = left(name, 6) & "~"
+End Property
 Public Function toJSON() As Dictionary
     Dim result As New Dictionary
     
@@ -109,6 +119,7 @@ Public Sub loadByTitle(title As String, Optional method As SearchMethod = TryAll
     Dim test_class As String
     Dim test_window As Window
     Dim i As Integer
+    Dim proc_name As String
     
     Set test_window = New Window
     
@@ -125,9 +136,17 @@ Public Sub loadByTitle(title As String, Optional method As SearchMethod = TryAll
             'Load the test Window instance with this handle
             test_window.loadByHandle test_handle
             
+            'Get the (lowercase) process name
+            proc_name = LCase(test_window.getProcessName())
+            
             'If the process name does not match what we expect, skip it
-            If test_window.getProcessName() <> Me.expected_process_name Then
-                GoTo Continue
+            If proc_name <> Me.expected_process_name Then
+                'Also check the shortname
+                If InStr(proc_name, Me.expected_short_name) = 1 Then
+                    'Don't skip, it's actually the expected process in shortname!
+                Else
+                    GoTo Continue
+                End If
             End If
         End If
         
