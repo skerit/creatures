@@ -33,8 +33,8 @@ Private Declare Function WaitForSingleObject Lib "kernel32" (ByVal hHandle As Lo
 Private Declare Function CloseHandle Lib "kernel32" (ByVal hObject As Long) As Long
 Private Declare Function FreeLibrary Lib "kernel32.dll" (ByVal hLibModule As Long) As Long
 Private Declare Function CreateToolhelp32Snapshot Lib "kernel32" (ByVal lFlags As Long, ByVal lProcessID As Long) As Long
-Private Declare Function Module32First Lib "kernel32" (ByVal hSnapshot As Long, uProcess As MODULEENTRY32) As Long
-Private Declare Function Module32Next Lib "kernel32" (ByVal hSnapshot As Long, uProcess As MODULEENTRY32) As Long
+Private Declare Function Module32First Lib "kernel32" (ByVal hSnapShot As Long, uProcess As MODULEENTRY32) As Long
+Private Declare Function Module32Next Lib "kernel32" (ByVal hSnapShot As Long, uProcess As MODULEENTRY32) As Long
 
 Public fLog As Long
 Private Const INVALID_FILE_ATTRIBUTES = -1
@@ -65,7 +65,7 @@ On Error GoTo ErrTrap
     MODE32.dwSize = Len(MODE32)
     RetVal = Module32First(LngCT32S, MODE32)
     Do While RetVal
-        If Strdll = Left(MODE32.szExePath, InStr(MODE32.szExePath, Chr(0)) - 1) Then
+        If Strdll = left(MODE32.szExePath, InStr(MODE32.szExePath, Chr(0)) - 1) Then
             LngBaseAddr = MODE32.modBaseAddr
         End If
         RetVal = Module32Next(LngCT32S, MODE32)
@@ -90,17 +90,7 @@ Public Function GetRelativeEntryAddress(sLibrary As String, sEntryFunction As St
         Exit Function
     End If
 
-    Debug.Print "Calling LoadLibrary ... " & sLibrary
-
     hLibrary = LoadLibrary(sLibrary)
-    'If hLibrary = 0 Then
-    '    Debug.Print "failed ... returned 0"
-    '    GetRelativeEntryAddress = 0
-    '    Exit Function
-    'End If
-    'Print #fLog, "OK, returned hLibrary = 0x" & Hex(hLibrary)
-
-    Debug.Print "Calling GetProcAddress ..."
 
     lpFunction = GetProcAddress(hLibrary, sEntryFunction)
     If lpFunction = 0 Then

@@ -577,7 +577,7 @@ Public Function RStoJSON(rs As ADODB.Recordset) As String
             lRecCnt = lRecCnt + 1
             sFlds = ""
             For Each fld In rs.Fields
-               sFlds = (sFlds & IIf(sFlds <> "", ",", "") & """" & fld.Name & """:""" & toUnicode(fld.value & "") & """")
+               sFlds = (sFlds & IIf(sFlds <> "", ",", "") & """" & fld.name & """:""" & toUnicode(fld.value & "") & """")
             Next 'fld
             sRecs.Append IIf((Trim(sRecs.toString) <> ""), "," & vbCrLf, "") & "{" & sFlds & "}"
             rs.MoveNext
@@ -590,54 +590,6 @@ Public Function RStoJSON(rs As ADODB.Recordset) As String
 errHandler:
 
 End Function
-
-'Public Function JsonRpcCall(url As String, methName As String, args(), Optional user As String, Optional pwd As String) As Object
-'    Dim r As Object
-'    Dim cli As Object
-'    Dim pText As String
-'    Static reqId As Integer
-'
-'    reqId = reqId + 1
-'
-'    Set r = CreateObject("Scripting.Dictionary")
-'    r("jsonrpc") = "2.0"
-'    r("method") = methName
-'    r("params") = args
-'    r("id") = reqId
-'
-'    pText = toString(r)
-'
-'    Set cli = CreateObject("MSXML2.XMLHTTP.6.0")
-'   ' Set cli = New MSXML2.XMLHTTP60
-'    If Len(user) > 0 Then   ' If Not IsMissing(user) Then
-'        cli.Open "POST", url, False, user, pwd
-'    Else
-'        cli.Open "POST", url, False
-'    End If
-'    cli.setRequestHeader "Content-Type", "application/json"
-'    cli.Send pText
-'
-'    If cli.Status <> 200 Then
-'        Err.Raise vbObjectError + INVALID_RPC_CALL + cli.Status, , cli.statusText
-'    End If
-'
-'    Set r = parse(cli.responseText)
-'    Set cli = Nothing
-'
-'    If r("id") <> reqId Then Err.Raise vbObjectError + INVALID_RPC_CALL, , "Bad Response id"
-'
-'    If r.Exists("error") Or Not r.Exists("result") Then
-'        Err.Raise vbObjectError + INVALID_RPC_CALL, , "Json-Rpc Response error: " & r("error")("message")
-'    End If
-'
-'    If Not r.Exists("result") Then Err.Raise vbObjectError + INVALID_RPC_CALL, , "Bad Response, missing result"
-'
-'    Set JsonRpcCall = r("result")
-'End Function
-
-
-
-
 Public Function toUnicode(str As String) As String
 
    Dim X As Long

@@ -257,7 +257,7 @@ Public Function getAllChildElements(Optional ByVal recursive As Boolean = True) 
     Set getAllChildElements = windows.getAllChildElementsOfWindow(handle, recursive)
 End Function
 'Get all the child windows of this one
-Public Sub getAllChildWindows()
+Public Function getAllChildWindows()
     Dim result As New Collection
     Dim value As Variant
     Dim Child As Window
@@ -278,7 +278,7 @@ Public Sub getAllChildWindows()
         'Child.loadByHandle CLng(Value)
         'Debug.Print " -- " & Child.title & " - " & Child.width
     Next value
-End Sub
+End Function
 'Get all child windows
 Public Function getAllChildWindowsTwo(Optional title As String) As Collection
     Dim child_window As Window

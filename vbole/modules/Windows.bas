@@ -1,19 +1,20 @@
 Attribute VB_Name = "Windows"
 Public prog As String
 Private Declare Function FindWindow Lib "user32.dll" Alias "FindWindowA" (ByVal lpClassName As Any, ByVal lpWindowName As Any) As Long
+Public Declare Function findWindowEx Lib "user32.dll" Alias "FindWindowExA" (ByVal hwndParent As Long, Optional ByVal hwndChildAfter As Long, Optional ByVal lpszClass As String, Optional ByVal lpszWindow As String) As Long
 Private Declare Function GetWindow Lib "user32.dll" (ByVal hwnd As Long, ByVal wCmd As Long) As Long
 Public Declare Function GetWindowTextI Lib "user32.dll" Alias "GetWindowTextA" (ByVal hwnd As Long, ByVal lpString As String, ByVal nMaxCount As Long) As Long
-Private Declare Function GetWindowTextLength Lib "user32" Alias "GetWindowTextLengthA" (ByVal hwnd As Long) As Long
 Public Declare Function GetParent Lib "user32.dll" (ByVal hwnd As Long) As Long
 Private Declare Function GetWindowThreadProcessId Lib "user32" (ByVal hwnd As Long, lpdwProcessId As Long) As Long
 Private Declare Function EnumWindows Lib "user32" (ByVal lpEnumFunc As Long, ByVal lParam As Long) As Long
 Private Declare Function EnumChildWindows Lib "user32" (ByVal hwndParent As Long, ByVal lpEnumFunc As Long, ByVal lParam As Long) As Long
 Private Declare Function GetWindowRect Lib "user32" (ByVal hwnd As Long, lpRect As WindowRect) As Long
-Private Declare Function sendMessageI Lib "user32" Alias "SendMessageW" (ByVal hwnd As Long, ByVal wMsg As Long, ByVal wParam As Long, lParam As Any) As Long
 Private Declare Function SendMessageA Lib "user32" (ByVal hwnd As Long, ByVal wMsg As Long, ByVal wParam As Long, lParam As Any) As Long
 Public Declare Sub Sleep Lib "kernel32.dll" (ByVal dwMilliseconds As Long)
 Public Declare Function GetDesktopWindow Lib "user32" () As Long
 Public Declare Function GetForegroundWindow Lib "user32" () As Long
+Private Declare Function CreateToolhelpSnapshot Lib "kernel32" Alias "CreateToolhelp32Snapshot" (ByVal lFlags As Long, ByVal lProcessID As Long) As Long
+Private Declare Function ProcessFirst Lib "kernel32" Alias "Process32First" (ByVal hSnapShot As Long, uProcess As PROCESSENTRY32) As Long
 
 Private Const MAX_PATH As Long = 260
 
@@ -29,7 +30,7 @@ Private Type PROCESSENTRY32
     dwFlags As Long
     szExeFile As String * MAX_PATH
 End Type
-Private Declare Function CreateToolhelpSnapshot Lib "kernel32" Alias "CreateToolhelp32Snapshot" (ByVal lFlags As Long, ByVal lProcessID As Long) As Long
+
 Private Const TH32CS_SNAPPROCESS As Long = 2&
 
 Private Type LUID
@@ -50,7 +51,7 @@ Const PROCESS_ALL_ACCESS = &H1F0FFF
 
 Private Declare Function GetVersion Lib "kernel32" () As Long
 
-Private Declare Function ProcessFirst Lib "kernel32" Alias "Process32First" (ByVal hSnapShot As Long, uProcess As PROCESSENTRY32) As Long
+
 Private Declare Function ProcessNext Lib "kernel32" Alias "Process32Next" (ByVal hSnapShot As Long, uProcess As PROCESSENTRY32) As Long
 Private Declare Function CloseHandle Lib "kernel32" (ByVal hObject As Long) As Long
 Private Declare Function TerminateProcess Lib "kernel32" (ByVal hProcess As Long, ByVal uExitCode As Long) As Long
@@ -60,7 +61,7 @@ Private Declare Function LookupPrivilegeValue Lib "advapi32" Alias "LookupPrivil
 Private Declare Function AdjustTokenPrivileges Lib "advapi32" (ByVal TokenHandle As Long, ByVal DisableAllPrivileges As Long, NewState As TOKEN_PRIVILEGES, ByVal BufferLength As Long, PreviousState As Any, ReturnLength As Any) As Long
 Private Declare Function GetCurrentProcess Lib "kernel32" () As Long
 
-Public Declare Function findWindowEx Lib "user32.dll" Alias "FindWindowExA" (ByVal hwndParent As Long, Optional ByVal hwndChildAfter As Long, Optional ByVal lpszClass As String, Optional ByVal lpszWindow As String) As Long
+
 
 Private Declare Function GetClassNameI Lib "user32" Alias "GetClassNameA" (ByVal hwnd As Long, _
                                                                           ByVal lpClassName As String, _
