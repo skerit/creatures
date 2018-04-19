@@ -120,6 +120,10 @@ Public Sub Main()
                 
         'Detecting save windows (main C2 window changes name)
         'C2Window.loadByTitles "Saving..."
+        
+        Debug.Print "Getting speed..."
+        Debug.Print getSpeed
+
         Exit Sub
     End If
 
@@ -554,6 +558,10 @@ Function executeCommand(req As Object) As Dictionary
         'Set the speed of C2
         setSpeed req.Item("acceleration"), req.Item("sleeptime")
     
+    ElseIf cmd_type = "getspeed" Then
+        'Get the speed of C2 if possible
+        response.Add "speed", getSpeed()
+    
     ElseIf cmd_type = "activatewindow" Then
         If ActiveWindow.handle = 0 Then
             response.Add "error", "No window is active"
@@ -622,6 +630,41 @@ Function executeCommand(req As Object) As Dictionary
     End If
     
     Set executeCommand = response
+End Function
+'Look for the speed window, but don't create it yet
+Function lookForSpeed() As Boolean
+    If C2Speed.handle = 0 Then
+        'Try getting the window
+        C2Speed.loadByTitle "Skerit's C2 Speedhack"
+
+        If C2Speed.handle = 0 Then
+            lookForSpeed = False
+        Else
+            lookForSpeed = True
+        End If
+    Else
+        lookForSpeed = True
+    End If
+End Function
+Function getSpeed() As Double
+    Dim children As New Collection
+    Dim child As Window
+    Dim i As Integer
+    
+    If lookForSpeed() Then
+        Set children = C2Speed.getAllChildElements()
+        
+        For i = 1 To children.Count
+            Set child = children(i)
+            
+            If child.title = "2" Then
+                getSpeed = CDbl(child.text_content)
+            End If
+        Next
+        
+    Else
+        getSpeed = -1
+    End If
 End Function
 Function setSpeed(acceleration As Double, Optional sleeptime As Integer = 5) As Boolean
     Dim msgObject As Dictionary

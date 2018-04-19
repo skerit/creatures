@@ -45,6 +45,8 @@ Private Declare Function GetModuleFileNameEx Lib "psapi" Alias "GetModuleFileNam
 Private Declare Function CloseHandle Lib "kernel32" (ByVal hObject As Long) As Long
 
 Private Const PROCESS_ALL_ACCESS = &H1F0FFF
+Private Const WM_GETTEXT As Long = &HD
+Private Const WM_GETTEXTLENGTH As Long = &HE
 
 Private Type CopyData
     dwData As Long
@@ -78,10 +80,24 @@ End Property
 Public Property Get expected_process_name() As String
    expected_process_name = p_expected_process_name
 End Property
-
+'Set the expected process name
 Public Property Let expected_process_name(ByVal name As String)
    p_expected_process_name = name
    expected_short_name = left(name, 6) & "~"
+End Property
+'Get the text content (of inputs)
+Public Property Get text_content() As String
+    Dim text_length As Long
+    
+    'Get the length of the text
+    text_length = sendMessageI(Me.handle, WM_GETTEXTLENGTH, ByVal 0, ByVal 0)
+    
+    If text_length = 0 Then
+        Exit Function
+    End If
+    
+    text_content = String$(text_length, vbNullChar)
+    sendMessageI Me.handle, WM_GETTEXT, ByVal (text_length + 1), ByVal StrPtr(text_content)
 End Property
 Public Function toJSON() As Dictionary
     Dim result As New Dictionary
@@ -95,6 +111,7 @@ Public Function toJSON() As Dictionary
     result.Add "title", Me.title
     result.Add "class", Me.class_name
     result.Add "class_readable", WindowClasses.getReadableName(Me.class_name)
+    result.Add "text_content", Me.text_content
     
     'Add the dimension info
     result.Add "left", pLeft
@@ -260,7 +277,7 @@ End Function
 Public Function getAllChildWindows()
     Dim result As New Collection
     Dim value As Variant
-    Dim Child As Window
+    Dim child As Window
     
     'If no handle is found, do nothing (or we'll search through ALL windows)
     If Me.handle = 0 Then
@@ -306,7 +323,7 @@ End Function
 'Get a window that has the current window as a parent handle
 Public Function getChildWindow(title As String) As Window
     Dim child_handle As Long
-    Dim Child As New Window
+    Dim child As New Window
     Dim all_handles As Collection
     Dim test_parent_handle As Long
     Dim test_handle As Long
@@ -314,7 +331,7 @@ Public Function getChildWindow(title As String) As Window
     
     'If no handle is found, do nothing (or we'll search through ALL windows)
     If Me.handle = 0 Then
-        Set getChildWindow = Child
+        Set getChildWindow = child
         Exit Function
     End If
     
@@ -327,13 +344,13 @@ Public Function getChildWindow(title As String) As Window
         test_parent_handle = windows.GetParent(test_handle)
 
         If test_parent_handle = handle Then
-            Child.loadByHandle test_handle
-            Child.parent_handle = test_parent_handle
+            child.loadByHandle test_handle
+            child.parent_handle = test_parent_handle
             Exit For
         End If
     Next
 
-    Set getChildWindow = Child
+    Set getChildWindow = child
 End Function
 Public Sub activate()
 

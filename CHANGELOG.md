@@ -2,6 +2,8 @@
 
 * Fix getting parents of an egg
 * [VB] Also try to identify creatures2.exe against it shortname, creatu~1.exe
+* [VB] Add ability to get text content of a window
+* [VB] Add `getspeed` command
 
 ## 0.2.5 (2018-03-26)
 
