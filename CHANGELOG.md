@@ -5,6 +5,8 @@
 * [VB] Add ability to get text content of a window
 * [VB] Add `getspeed` command
 * Fixed bug where Creature instances not in-game would be destroyed immediately
+* Add `CreaturesApplication#creature_count` property, which gives the amount of creatures in the current world
+* Cache `CreaturesApplication#getWorldName` for 60 seconds
 
 ## 0.2.5 (2018-03-26)
 
