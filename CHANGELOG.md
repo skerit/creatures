@@ -1,4 +1,4 @@
-## 0.2.6 (WIP)
+## 0.2.6 (2018-04-22)
 
 * Fix getting parents of an egg
 * [VB] Also try to identify creatures2.exe against it shortname, creatu~1.exe
