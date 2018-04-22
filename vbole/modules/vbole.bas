@@ -394,6 +394,8 @@ Function executeCommand(req As Object) As Dictionary
     Dim var_type As String
     Dim temp_bool As Boolean
     Dim temp_int As Integer
+    Dim retry As Integer
+    Dim retries As Integer
 
     cmd_type = req.Item("type")
 
@@ -512,12 +514,26 @@ Function executeCommand(req As Object) As Dictionary
         Set ActiveWindow = New Window
         var_type = TypeName(req.Item("command"))
         
-        If var_type = "String" Then
-            ActiveWindow.loadByTitle req.Item("command")
+        If TypeName(req.Item("retries")) = "Number" Then
+            retries = req.Item("retries")
         Else
-            ActiveWindow.loadByHandle req.Item("command")
+            retries = 2
         End If
         
+        For retry = 1 To retries
+            If var_type = "String" Then
+                ActiveWindow.loadByTitle req.Item("command")
+            Else
+                ActiveWindow.loadByHandle req.Item("command")
+            End If
+            
+            If ActiveWindow.handle = 0 Then
+                Sleep 150
+            Else
+                Exit For
+            End If
+        Next
+
         If ActiveWindow.handle = 0 Then
             response.Add "error", "Window '" & req.Item("command") & "' not found"
         Else

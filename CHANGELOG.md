@@ -9,6 +9,7 @@
 * Cache `CreaturesApplication#getWorldName` for 60 seconds
 * Add `Creature#getOwnerData` and `Creature#setNotes`
 * Add simple `serialize` and `parse` methods for use in `LString` fields
+* [VB] Add retries to getting a window by name or handle, reducing timeouts
 
 ## 0.2.5 (2018-03-26)
 
