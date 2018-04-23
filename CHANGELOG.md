@@ -1,6 +1,7 @@
 ## 0.2.7 (WIP)
 
 * Remove limitation count on vbole.exe reconnects
+* Fix creature update overload
 
 ## 0.2.6 (2018-04-22)
 
