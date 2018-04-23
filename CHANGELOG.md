@@ -3,6 +3,8 @@
 * Remove limitation count on vbole.exe reconnects
 * Fix creature update overload
 * Only allow 1 egg update script at a time
+* Don't move a creature to invalid coordinates
+* Make sure local creature info is updated before it is exported
 
 ## 0.2.6 (2018-04-22)
 
