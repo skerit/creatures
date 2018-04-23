@@ -1,3 +1,7 @@
+## 0.2.7 (WIP)
+
+* Remove limitation count on vbole.exe reconnects
+
 ## 0.2.6 (2018-04-22)
 
 * Fix getting parents of an egg
