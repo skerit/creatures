@@ -5,6 +5,7 @@
 * Only allow 1 egg update script at a time
 * Don't move a creature to invalid coordinates
 * Make sure local creature info is updated before it is exported
+* Retry file reads that fialed with `ENOENT` if they're export files
 
 ## 0.2.6 (2018-04-22)
 
