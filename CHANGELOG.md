@@ -2,6 +2,7 @@
 
 * Remove limitation count on vbole.exe reconnects
 * Fix creature update overload
+* Only allow 1 egg update script at a time
 
 ## 0.2.6 (2018-04-22)
 
