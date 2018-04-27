@@ -7,6 +7,7 @@
 * Make sure local creature info is updated before it is exported
 * Retry file reads that fialed with `ENOENT` if they're export files
 * Retry getting a parent for generation calculation if the reason is a timeout
+* Do not load creature history file if it is empty
 
 ## 0.2.6 (2018-04-22)
 
