@@ -1,3 +1,7 @@
+## 0.2.8 (WIP)
+
+* Allow maximum 10 entries in the `creatures_queue`, before finally executing the next function in the queue
+
 ## 0.2.7 (2018-04-27)
 
 * Remove limitation count on vbole.exe reconnects
