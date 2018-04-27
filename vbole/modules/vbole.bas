@@ -168,6 +168,7 @@ WriteStdErr Err.Source & " caused an error of type " & Err.Number & " - " & Err.
 GoTo ListenLoop
     
 byebye:
+WriteDebug "VBOLE loop has ended"
 End Sub
 Sub checkC2Window(Optional attempt As Integer = 0)
     Dim search_again As Boolean

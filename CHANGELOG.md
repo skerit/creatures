@@ -6,6 +6,7 @@
 * Don't move a creature to invalid coordinates
 * Make sure local creature info is updated before it is exported
 * Retry file reads that fialed with `ENOENT` if they're export files
+* Retry getting a parent for generation calculation if the reason is a timeout
 
 ## 0.2.6 (2018-04-22)
 
