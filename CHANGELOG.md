@@ -2,6 +2,7 @@
 
 * Allow maximum 10 entries in the `creatures_queue`, before finally executing the next function in the queue
 * Make sure calling back with an error does not block queues
+* Add classification system & known scriptorium object names
 
 ## 0.2.7 (2018-04-27)
 
